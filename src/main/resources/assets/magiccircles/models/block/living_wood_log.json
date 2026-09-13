@@ -1,0 +1,7 @@
+{
+  "parent": "block/cube_column",
+  "textures": {
+    "end": "magiccircles:block/living_wood_log_top",
+    "side": "magiccircles:block/living_wood_log"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "magiccircles:chalk_tint",
+  "ingredients": [
+    { "item": "magiccircles:chalk" },
+    { "item": "magiccircles:thelia_dust" }
+  ],
+  "result": {
+    "item": "magiccircles:green_chalk",
+    "count": 1
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:campfire_cooking",
+  "ingredient": {
+    "item": "magiccircles:raw_mana_wyrm"
+  },
+  "result": "magiccircles:cooked_mana_wyrm",
+  "experience": 0.35,
+  "cookingtime": 600
+}

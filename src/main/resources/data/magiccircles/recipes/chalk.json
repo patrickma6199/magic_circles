@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "magiccircles:arcane_dust" },
+    { "item": "minecraft:bone_meal" }
+  ],
+  "result": {
+    "item": "magiccircles:chalk",
+    "count": 1
+  }
+}

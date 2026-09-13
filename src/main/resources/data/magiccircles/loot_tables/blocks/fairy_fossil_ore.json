@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "minecraft:bone", "weight": 95 },
+        { "type": "minecraft:item", "name": "magiccircles:fairy_horn", "weight": 4 },
+        {
+          "type": "minecraft:item",
+          "name": "magiccircles:heartstone",
+          "weight": 1,
+          "functions": [
+            { "function": "minecraft:set_nbt", "tag": "{Mana:500}" }
+          ]
+        }
+      ],
+      "conditions": [
+        { "condition": "minecraft:survives_explosion" }
+      ]
+    }
+  ]
+}

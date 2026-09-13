@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "item": "magiccircles:raw_mana_wyrm"
+  },
+  "result": "magiccircles:cooked_mana_wyrm",
+  "experience": 0.35,
+  "cookingtime": 200
+}

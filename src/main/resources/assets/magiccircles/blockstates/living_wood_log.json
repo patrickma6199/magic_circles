@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "axis=y": { "model": "magiccircles:block/living_wood_log" },
+    "axis=z": { "model": "magiccircles:block/living_wood_log", "x": 90 },
+    "axis=x": { "model": "magiccircles:block/living_wood_log", "x": 90, "y": 90 }
+  }
+}

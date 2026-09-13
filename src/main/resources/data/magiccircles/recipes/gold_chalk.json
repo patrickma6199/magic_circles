@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "magiccircles:arcane_dust" },
+    { "item": "minecraft:gold_nugget" }
+  ],
+  "result": {
+    "item": "magiccircles:gold_chalk",
+    "count": 1
+  }
+}

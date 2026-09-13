@@ -1,0 +1,10 @@
+{
+  "type": "magiccircles:fairy_realm",
+  "generator": {
+    "type": "magiccircles:fairy_realm",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "magiccircles:fairy_realm"
+    }
+  }
+}

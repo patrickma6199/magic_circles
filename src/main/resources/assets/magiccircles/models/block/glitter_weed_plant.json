@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "magiccircles:block/glitter_weed_plant"
+  }
+}

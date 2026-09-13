@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "magiccircles:item/raw_mana_wyrm"
+  }
+}

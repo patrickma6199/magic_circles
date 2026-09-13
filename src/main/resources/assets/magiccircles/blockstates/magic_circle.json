@@ -1,0 +1,364 @@
+{
+  "variants": {
+    "color=blue,variant=0": {
+      "model": "magiccircles:block/magic_circle_0"
+    },
+    "color=blue,variant=1": {
+      "model": "magiccircles:block/magic_circle_1"
+    },
+    "color=blue,variant=2": {
+      "model": "magiccircles:block/magic_circle_2"
+    },
+    "color=blue,variant=3": {
+      "model": "magiccircles:block/magic_circle_3"
+    },
+    "color=blue,variant=4": {
+      "model": "magiccircles:block/magic_circle_4"
+    },
+    "color=blue,variant=5": {
+      "model": "magiccircles:block/magic_circle_5"
+    },
+    "color=blue,variant=6": {
+      "model": "magiccircles:block/magic_circle_6"
+    },
+    "color=blue,variant=7": {
+      "model": "magiccircles:block/magic_circle_7"
+    },
+    "color=blue,variant=8": {
+      "model": "magiccircles:block/magic_circle_8"
+    },
+    "color=blue,variant=9": {
+      "model": "magiccircles:block/magic_circle_9"
+    },
+    "color=blue,variant=10": {
+      "model": "magiccircles:block/magic_circle_10"
+    },
+    "color=blue,variant=11": {
+      "model": "magiccircles:block/magic_circle_11"
+    },
+    "color=blue,variant=12": {
+      "model": "magiccircles:block/magic_circle_12"
+    },
+    "color=blue,variant=13": {
+      "model": "magiccircles:block/magic_circle_13"
+    },
+    "color=blue,variant=14": {
+      "model": "magiccircles:block/magic_circle_14"
+    },
+    "color=blue,variant=15": {
+      "model": "magiccircles:block/magic_circle_15"
+    },
+    "color=blue,variant=16": {
+      "model": "magiccircles:block/magic_circle_16"
+    },
+    "color=blue,variant=17": {
+      "model": "magiccircles:block/magic_circle_17"
+    },
+    "color=blue,variant=18": {
+      "model": "magiccircles:block/magic_circle_18"
+    },
+    "color=blue,variant=19": {
+      "model": "magiccircles:block/magic_circle_19"
+    },
+    "color=gold,variant=0": {
+      "model": "magiccircles:block/magic_circle_gold_0"
+    },
+    "color=gold,variant=1": {
+      "model": "magiccircles:block/magic_circle_gold_1"
+    },
+    "color=gold,variant=2": {
+      "model": "magiccircles:block/magic_circle_gold_2"
+    },
+    "color=gold,variant=3": {
+      "model": "magiccircles:block/magic_circle_gold_3"
+    },
+    "color=gold,variant=4": {
+      "model": "magiccircles:block/magic_circle_gold_4"
+    },
+    "color=gold,variant=5": {
+      "model": "magiccircles:block/magic_circle_gold_5"
+    },
+    "color=gold,variant=6": {
+      "model": "magiccircles:block/magic_circle_gold_6"
+    },
+    "color=gold,variant=7": {
+      "model": "magiccircles:block/magic_circle_gold_7"
+    },
+    "color=gold,variant=8": {
+      "model": "magiccircles:block/magic_circle_gold_8"
+    },
+    "color=gold,variant=9": {
+      "model": "magiccircles:block/magic_circle_gold_9"
+    },
+    "color=gold,variant=10": {
+      "model": "magiccircles:block/magic_circle_gold_10"
+    },
+    "color=gold,variant=11": {
+      "model": "magiccircles:block/magic_circle_gold_11"
+    },
+    "color=gold,variant=12": {
+      "model": "magiccircles:block/magic_circle_gold_12"
+    },
+    "color=gold,variant=13": {
+      "model": "magiccircles:block/magic_circle_gold_13"
+    },
+    "color=gold,variant=14": {
+      "model": "magiccircles:block/magic_circle_gold_14"
+    },
+    "color=gold,variant=15": {
+      "model": "magiccircles:block/magic_circle_gold_15"
+    },
+    "color=gold,variant=16": {
+      "model": "magiccircles:block/magic_circle_gold_16"
+    },
+    "color=gold,variant=17": {
+      "model": "magiccircles:block/magic_circle_gold_17"
+    },
+    "color=gold,variant=18": {
+      "model": "magiccircles:block/magic_circle_gold_18"
+    },
+    "color=gold,variant=19": {
+      "model": "magiccircles:block/magic_circle_gold_19"
+    },
+    "color=purple,variant=0": {
+      "model": "magiccircles:block/magic_circle_purple_0"
+    },
+    "color=purple,variant=1": {
+      "model": "magiccircles:block/magic_circle_purple_1"
+    },
+    "color=purple,variant=2": {
+      "model": "magiccircles:block/magic_circle_purple_2"
+    },
+    "color=purple,variant=3": {
+      "model": "magiccircles:block/magic_circle_purple_3"
+    },
+    "color=purple,variant=4": {
+      "model": "magiccircles:block/magic_circle_purple_4"
+    },
+    "color=purple,variant=5": {
+      "model": "magiccircles:block/magic_circle_purple_5"
+    },
+    "color=purple,variant=6": {
+      "model": "magiccircles:block/magic_circle_purple_6"
+    },
+    "color=purple,variant=7": {
+      "model": "magiccircles:block/magic_circle_purple_7"
+    },
+    "color=purple,variant=8": {
+      "model": "magiccircles:block/magic_circle_purple_8"
+    },
+    "color=purple,variant=9": {
+      "model": "magiccircles:block/magic_circle_purple_9"
+    },
+    "color=purple,variant=10": {
+      "model": "magiccircles:block/magic_circle_purple_10"
+    },
+    "color=purple,variant=11": {
+      "model": "magiccircles:block/magic_circle_purple_11"
+    },
+    "color=purple,variant=12": {
+      "model": "magiccircles:block/magic_circle_purple_12"
+    },
+    "color=purple,variant=13": {
+      "model": "magiccircles:block/magic_circle_purple_13"
+    },
+    "color=purple,variant=14": {
+      "model": "magiccircles:block/magic_circle_purple_14"
+    },
+    "color=purple,variant=15": {
+      "model": "magiccircles:block/magic_circle_purple_15"
+    },
+    "color=purple,variant=16": {
+      "model": "magiccircles:block/magic_circle_purple_16"
+    },
+    "color=purple,variant=17": {
+      "model": "magiccircles:block/magic_circle_purple_17"
+    },
+    "color=purple,variant=18": {
+      "model": "magiccircles:block/magic_circle_purple_18"
+    },
+    "color=purple,variant=19": {
+      "model": "magiccircles:block/magic_circle_purple_19"
+    },
+    "color=red,variant=0": {
+      "model": "magiccircles:block/magic_circle_red_0"
+    },
+    "color=red,variant=1": {
+      "model": "magiccircles:block/magic_circle_red_1"
+    },
+    "color=red,variant=2": {
+      "model": "magiccircles:block/magic_circle_red_2"
+    },
+    "color=red,variant=3": {
+      "model": "magiccircles:block/magic_circle_red_3"
+    },
+    "color=red,variant=4": {
+      "model": "magiccircles:block/magic_circle_red_4"
+    },
+    "color=red,variant=5": {
+      "model": "magiccircles:block/magic_circle_red_5"
+    },
+    "color=red,variant=6": {
+      "model": "magiccircles:block/magic_circle_red_6"
+    },
+    "color=red,variant=7": {
+      "model": "magiccircles:block/magic_circle_red_7"
+    },
+    "color=red,variant=8": {
+      "model": "magiccircles:block/magic_circle_red_8"
+    },
+    "color=red,variant=9": {
+      "model": "magiccircles:block/magic_circle_red_9"
+    },
+    "color=red,variant=10": {
+      "model": "magiccircles:block/magic_circle_red_10"
+    },
+    "color=red,variant=11": {
+      "model": "magiccircles:block/magic_circle_red_11"
+    },
+    "color=red,variant=12": {
+      "model": "magiccircles:block/magic_circle_red_12"
+    },
+    "color=red,variant=13": {
+      "model": "magiccircles:block/magic_circle_red_13"
+    },
+    "color=red,variant=14": {
+      "model": "magiccircles:block/magic_circle_red_14"
+    },
+    "color=red,variant=15": {
+      "model": "magiccircles:block/magic_circle_red_15"
+    },
+    "color=red,variant=16": {
+      "model": "magiccircles:block/magic_circle_red_16"
+    },
+    "color=red,variant=17": {
+      "model": "magiccircles:block/magic_circle_red_17"
+    },
+    "color=red,variant=18": {
+      "model": "magiccircles:block/magic_circle_red_18"
+    },
+    "color=red,variant=19": {
+      "model": "magiccircles:block/magic_circle_red_19"
+    },
+    "color=green,variant=0": {
+      "model": "magiccircles:block/magic_circle_green_0"
+    },
+    "color=green,variant=1": {
+      "model": "magiccircles:block/magic_circle_green_1"
+    },
+    "color=green,variant=2": {
+      "model": "magiccircles:block/magic_circle_green_2"
+    },
+    "color=green,variant=3": {
+      "model": "magiccircles:block/magic_circle_green_3"
+    },
+    "color=green,variant=4": {
+      "model": "magiccircles:block/magic_circle_green_4"
+    },
+    "color=green,variant=5": {
+      "model": "magiccircles:block/magic_circle_green_5"
+    },
+    "color=green,variant=6": {
+      "model": "magiccircles:block/magic_circle_green_6"
+    },
+    "color=green,variant=7": {
+      "model": "magiccircles:block/magic_circle_green_7"
+    },
+    "color=green,variant=8": {
+      "model": "magiccircles:block/magic_circle_green_8"
+    },
+    "color=green,variant=9": {
+      "model": "magiccircles:block/magic_circle_green_9"
+    },
+    "color=green,variant=10": {
+      "model": "magiccircles:block/magic_circle_green_10"
+    },
+    "color=green,variant=11": {
+      "model": "magiccircles:block/magic_circle_green_11"
+    },
+    "color=green,variant=12": {
+      "model": "magiccircles:block/magic_circle_green_12"
+    },
+    "color=green,variant=13": {
+      "model": "magiccircles:block/magic_circle_green_13"
+    },
+    "color=green,variant=14": {
+      "model": "magiccircles:block/magic_circle_green_14"
+    },
+    "color=green,variant=15": {
+      "model": "magiccircles:block/magic_circle_green_15"
+    },
+    "color=green,variant=16": {
+      "model": "magiccircles:block/magic_circle_green_16"
+    },
+    "color=green,variant=17": {
+      "model": "magiccircles:block/magic_circle_green_17"
+    },
+    "color=green,variant=18": {
+      "model": "magiccircles:block/magic_circle_green_18"
+    },
+    "color=green,variant=19": {
+      "model": "magiccircles:block/magic_circle_green_19"
+    },
+    "color=black,variant=0": {
+      "model": "magiccircles:block/magic_circle_black_0"
+    },
+    "color=black,variant=1": {
+      "model": "magiccircles:block/magic_circle_black_1"
+    },
+    "color=black,variant=2": {
+      "model": "magiccircles:block/magic_circle_black_2"
+    },
+    "color=black,variant=3": {
+      "model": "magiccircles:block/magic_circle_black_3"
+    },
+    "color=black,variant=4": {
+      "model": "magiccircles:block/magic_circle_black_4"
+    },
+    "color=black,variant=5": {
+      "model": "magiccircles:block/magic_circle_black_5"
+    },
+    "color=black,variant=6": {
+      "model": "magiccircles:block/magic_circle_black_6"
+    },
+    "color=black,variant=7": {
+      "model": "magiccircles:block/magic_circle_black_7"
+    },
+    "color=black,variant=8": {
+      "model": "magiccircles:block/magic_circle_black_8"
+    },
+    "color=black,variant=9": {
+      "model": "magiccircles:block/magic_circle_black_9"
+    },
+    "color=black,variant=10": {
+      "model": "magiccircles:block/magic_circle_black_10"
+    },
+    "color=black,variant=11": {
+      "model": "magiccircles:block/magic_circle_black_11"
+    },
+    "color=black,variant=12": {
+      "model": "magiccircles:block/magic_circle_black_12"
+    },
+    "color=black,variant=13": {
+      "model": "magiccircles:block/magic_circle_black_13"
+    },
+    "color=black,variant=14": {
+      "model": "magiccircles:block/magic_circle_black_14"
+    },
+    "color=black,variant=15": {
+      "model": "magiccircles:block/magic_circle_black_15"
+    },
+    "color=black,variant=16": {
+      "model": "magiccircles:block/magic_circle_black_16"
+    },
+    "color=black,variant=17": {
+      "model": "magiccircles:block/magic_circle_black_17"
+    },
+    "color=black,variant=18": {
+      "model": "magiccircles:block/magic_circle_black_18"
+    },
+    "color=black,variant=19": {
+      "model": "magiccircles:block/magic_circle_black_19"
+    }
+  }
+}

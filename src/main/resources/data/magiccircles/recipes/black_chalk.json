@@ -1,0 +1,11 @@
+{
+  "type": "magiccircles:chalk_tint",
+  "ingredients": [
+    { "item": "magiccircles:chalk" },
+    { "tag": "minecraft:coals" }
+  ],
+  "result": {
+    "item": "magiccircles:black_chalk",
+    "count": 1
+  }
+}

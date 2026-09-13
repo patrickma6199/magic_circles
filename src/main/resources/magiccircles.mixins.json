@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.patrickma.magiccircles.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "magiccircles.refmap.json",
+  "mixins": [
+    "EntityMixin",
+    "ServerPlayerMixin",
+    "PlayerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
