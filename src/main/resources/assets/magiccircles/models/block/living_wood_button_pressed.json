@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/button_pressed",
+  "textures": {
+    "texture": "magiccircles:block/living_wood_planks"
+  }
+}

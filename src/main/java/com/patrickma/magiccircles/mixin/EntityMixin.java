@@ -29,4 +29,28 @@ public abstract class EntityMixin
             cir.setReturnValue(Veil.visibleTo(self, viewer));
         }
     }
+
+    /** Nothing behind the veil presses a plate or trips a wire in the living world - see {@code limbo/VeilIntangibility}. */
+    @Inject(method = "isIgnoringBlockTriggers", at = @At("HEAD"), cancellable = true)
+    private void magiccircles$ghostsTriggerNothing(CallbackInfoReturnable<Boolean> cir)
+    {
+        Entity self = (Entity) (Object) this;
+        if (!self.level().isClientSide && com.patrickma.magiccircles.limbo.LimboRegistry.isCreatureGhost(self))
+        {
+            cir.setReturnValue(true);
+        }
+    }
+
+    /** Something behind the veil is heard only by those who could see it - see {@code limbo/VeilSounds}. */
+    @Inject(method = "playSound(Lnet/minecraft/sounds/SoundEvent;FF)V", at = @At("HEAD"), cancellable = true)
+    private void magiccircles$veilSounds(net.minecraft.sounds.SoundEvent sound, float volume, float pitch,
+                                         org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci)
+    {
+        Entity self = (Entity) (Object) this;
+        if (!self.level().isClientSide && Veil.isBehindVeil(self))
+        {
+            ci.cancel();
+            com.patrickma.magiccircles.limbo.VeilSounds.play(self, sound, volume, pitch, null);
+        }
+    }
 }

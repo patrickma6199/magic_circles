@@ -30,10 +30,9 @@ import java.util.UUID;
  * the same "a spell is still running" language {@code ClientHeartWisps}' own white ring uses for a
  * real Heart Core, just centered on a person instead of a block. The spell's own color(s) fly out
  * from roughly where the held stone is and back, in the same rotation sense the ring-cast version
- * uses - except for {@link HeartSpell#SHIELD}, whose purple wisps instead trace a *stationary*
- * ring at the exact world position the player was standing in when they cast it (mirroring {@code
- * ShieldRingWisps}, but around a bare point in space rather than a placed ring of runes), since the
- * hand-cast shield itself doesn't move with the player either.
+ * uses - except for {@link HeartSpell#SHIELD}, whose purple wisps instead trace the ward's own
+ * middle (see {@code FairyWard}): a ring its size, fixed where it closed round the player - a block
+ * higher if they cast it standing on the ground, since the ward lifts them that far first.
  */
 @Mod.EventBusSubscriber(modid = MagicCircles.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class CommandedHeartstoneWisps
@@ -48,9 +47,9 @@ public final class CommandedHeartstoneWisps
     private static final int ONE_SHOT_BURST_TICKS = 20;
 
     private static final int SHIELD_WISP_COUNT = MagicCircleRitual.RING_OFFSETS.length;
-    private static final double SHIELD_RADIUS = 7.0;
+    private static final double SHIELD_RADIUS = com.patrickma.magiccircles.FairyWard.RADIUS;
     private static final double SHIELD_SPEED = 0.022;
-    private static final double SHIELD_LEG_HEIGHT = 0.3;
+    private static final double SHIELD_LEG_HEIGHT = 0.0;
 
     private static final Map<UUID, ActiveVisual> ACTIVE = new HashMap<>();
 
@@ -61,9 +60,21 @@ public final class CommandedHeartstoneWisps
     /** Called from {@code HeartstoneItem#use}, client side only, the instant a commanded cast is triggered. */
     public static void start(Player player, HeartSpell spell)
     {
+        // A second right-click while a lasting spell's wisps still show ends them, just as the
+        // server ends the spell itself (see CommandedSpellCasting#cancelActive).
+        ActiveVisual running = ACTIVE.get(player.getUUID());
+        if (spell.isProlonged() && running != null && running.spell == spell)
+        {
+            ACTIVE.remove(player.getUUID());
+            return;
+        }
         RuneColor[] colors = spellColors(spell);
         int duration = spell.isProlonged() ? CommandedSpellCasting.DURATION_TICKS : ONE_SHOT_BURST_TICKS;
-        ACTIVE.put(player.getUUID(), new ActiveVisual(spell, colors, player.position(), duration));
+        // A Shield's ring sits at the middle of the ward - which lifts a grounded caster a block first.
+        Vec3 castCenter = spell == HeartSpell.SHIELD
+                ? player.position().add(0.0, (player.onGround() ? 1.0 : 0.0) + player.getBbHeight() / 2.0, 0.0)
+                : player.position();
+        ACTIVE.put(player.getUUID(), new ActiveVisual(spell, colors, castCenter, duration));
     }
 
     @SubscribeEvent
@@ -133,7 +144,7 @@ public final class CommandedHeartstoneWisps
         }
     }
 
-    /** Purple wisps tracing a fixed ring at {@code center} - the shield boundary itself, unmoving even as the player who cast it walks away. Same math as {@code ShieldRingWisps}, just around a bare Vec3 instead of a placed ring's own rune positions. */
+    /** Purple wisps tracing a fixed ring round {@code center} - the ward's own middle. Same math as {@code ShieldRingWisps}, just around a bare Vec3 instead of a placed ring's own rune positions. */
     private static void tickStationaryRing(Level level, Vec3 center, double time)
     {
         Vector3f purple = RuneColor.PURPLE.wispColor();

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "magiccircles:living_wood_log",
+    "magiccircles:living_wood",
+    "magiccircles:stripped_living_wood_log",
+    "magiccircles:stripped_living_wood"
+  ]
+}

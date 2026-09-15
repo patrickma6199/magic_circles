@@ -1,10 +1,12 @@
 package com.patrickma.magiccircles.entity;
 
 import com.patrickma.magiccircles.limbo.LimboRegistry;
+import com.patrickma.magiccircles.registry.ModSounds;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -16,6 +18,7 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -51,6 +54,12 @@ public class FerrymanEntity extends PathfinderMob implements GeoEntity
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     private UUID casterUuid;
+    /**
+     * Whether this Ferryman stands behind the veil. True for the one the crossing rite summons to
+     * carry the caster over; false for the one the summoning circle drags bodily into the living
+     * world, who is meant to be seen and walked up to by anyone.
+     */
+    private boolean veiled = true;
 
     public FerrymanEntity(EntityType<? extends FerrymanEntity> type, Level level)
     {
@@ -137,6 +146,70 @@ public class FerrymanEntity extends PathfinderMob implements GeoEntity
         return casterUuid;
     }
 
+    /**
+     * When set, this Ferryman is a haunting - see {@code limbo/MarkedByTheDarkManager}. He exists
+     * for one person only and nobody else is ever told he is there, which is enforced in {@code
+     * limbo/Veil#visibleTo} through the same tracking mixin the veil itself uses.
+     */
+    @Nullable
+    private UUID hauntTarget;
+
+    @Nullable
+    public UUID getHauntTarget()
+    {
+        return hauntTarget;
+    }
+
+    public void setHauntTarget(UUID hauntTarget)
+    {
+        this.hauntTarget = hauntTarget;
+    }
+
+    public void setVeiled(boolean veiled)
+    {
+        this.veiled = veiled;
+    }
+
+    public boolean isVeiled()
+    {
+        return veiled;
+    }
+
+    /**
+     * True for the one summoned bodily into the living world, whose touch empties the veil entirely.
+     * A haunting glimpse is unveiled too, so it has to be excluded explicitly - it is not a Ferryman
+     * anyone summoned, only something the Marked see.
+     */
+    public boolean isSummoned()
+    {
+        return !veiled && hauntTarget == null;
+    }
+
+    /**
+     * His presence: a quiet, low rumble now and then, heard only up close (see sounds.json). Never
+     * from a haunting - to the Marked he is something glimpsed, not heard, and nobody near them
+     * should hear him either (he is silenced outright too, see limbo/MarkedByTheDarkManager). The
+     * rite's Ferryman stands behind the veil, so his rumble reaches only those who can see him.
+     */
+    @Override
+    @Nullable
+    protected SoundEvent getAmbientSound()
+    {
+        return hauntTarget != null ? null : ModSounds.FERRYMAN_RUMBLE.get();
+    }
+
+    @Override
+    protected float getSoundVolume()
+    {
+        return 0.4f;
+    }
+
+    @Override
+    public int getAmbientSoundInterval()
+    {
+        return 160;
+    }
+
     @Override
     public boolean isPushable()
     {
@@ -146,6 +219,11 @@ public class FerrymanEntity extends PathfinderMob implements GeoEntity
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand)
     {
+        // A haunting is a glimpse, not a person. There is nothing there to touch.
+        if (hauntTarget != null)
+        {
+            return InteractionResult.PASS;
+        }
         if (this.level().isClientSide)
         {
             return InteractionResult.SUCCESS;
@@ -169,6 +247,7 @@ public class FerrymanEntity extends PathfinderMob implements GeoEntity
     public void addAdditionalSaveData(CompoundTag tag)
     {
         super.addAdditionalSaveData(tag);
+        tag.putBoolean("Veiled", veiled);
         if (casterUuid != null)
         {
             tag.putUUID("CasterUuid", casterUuid);
@@ -179,6 +258,7 @@ public class FerrymanEntity extends PathfinderMob implements GeoEntity
     public void readAdditionalSaveData(CompoundTag tag)
     {
         super.readAdditionalSaveData(tag);
+        veiled = !tag.contains("Veiled") || tag.getBoolean("Veiled");
         if (tag.hasUUID("CasterUuid"))
         {
             casterUuid = tag.getUUID("CasterUuid");

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/template_trapdoor_open",
+  "textures": {
+    "texture": "magiccircles:block/living_wood_trapdoor"
+  },
+  "render_type": "minecraft:cutout"
+}

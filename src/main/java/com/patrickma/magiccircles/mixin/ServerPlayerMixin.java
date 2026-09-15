@@ -30,4 +30,17 @@ public abstract class ServerPlayerMixin
             cir.setReturnValue(Veil.visibleTo(self, viewer));
         }
     }
+
+    /**
+     * A rite caster killed on the other side does not simply die - their soul goes back to the
+     * crucible. Swaps the words of vanilla's own announcement, so the death screen and the chat
+     * both say so, and every rule about who is told stays vanilla's.
+     */
+    @org.spongepowered.asm.mixin.injection.Redirect(method = "die", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/damagesource/CombatTracker;getDeathMessage()Lnet/minecraft/network/chat/Component;"))
+    private net.minecraft.network.chat.Component magiccircles$crucibleMessage(net.minecraft.world.damagesource.CombatTracker tracker)
+    {
+        return com.patrickma.magiccircles.limbo.DeathLimboManager.deathMessageFor((ServerPlayer) (Object) this,
+                tracker.getDeathMessage());
+    }
 }

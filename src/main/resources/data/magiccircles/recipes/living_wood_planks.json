@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "group": "planks",
+  "ingredients": [
+    {
+      "tag": "magiccircles:living_wood_logs"
+    }
+  ],
+  "result": {
+    "count": 4,
+    "item": "magiccircles:living_wood_planks"
+  }
+}

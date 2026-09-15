@@ -2,5 +2,11 @@
   "parent": "minecraft:item/generated",
   "textures": {
     "layer0": "magiccircles:item/athame"
-  }
+  },
+  "overrides": [
+    {
+      "predicate": { "magiccircles:signed": 1 },
+      "model": "magiccircles:item/athame_signed"
+    }
+  ]
 }

@@ -30,7 +30,7 @@ import java.util.Random;
 @Mod.EventBusSubscriber(modid = MagicCircles.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class PixiePopulationMaintainer
 {
-    private static final int TARGET_POPULATION = 60;
+    private static final int TARGET_POPULATION = 20;
     private static final int CHECK_INTERVAL_TICKS = 20 * 30;
     private static final int MAX_SPAWNS_PER_CHECK = 6;
 

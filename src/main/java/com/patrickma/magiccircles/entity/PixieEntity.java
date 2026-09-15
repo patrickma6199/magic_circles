@@ -2,28 +2,29 @@ package com.patrickma.magiccircles.entity;
 
 import com.patrickma.magiccircles.registry.ModBlockTags;
 import com.patrickma.magiccircles.registry.ModDimensions;
+import com.patrickma.magiccircles.registry.ModSounds;
 import com.patrickma.magiccircles.worldgen.WorldTree;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.NeutralMob;
 import net.minecraft.world.entity.animal.allay.Allay;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
 /**
  * A fairy's own less-sentient companion - "dogs to people," the same relationship an Allay
@@ -43,19 +44,14 @@ import java.util.UUID;
  *     zero, the pixie dies of it.</li>
  *     <li>{@link PixieFlyNearTreeGoal}/{@link PixieStayNearKinGoal} - the two likes this was asked
  *     for ("enjoy flying close to the World Tree," "enjoy being around... other pixies").</li>
- *     <li>{@link NeutralMob} - hitting any one pixie angers every pixie nearby at the culprit for
- *     {@link #ANGER_DURATION_TICKS} (10 seconds), the same "the whole group responds" mechanic
- *     bees/piglins use, rather than just that one pixie fighting back alone.</li>
+ *     <li>{@link FollowQueenGoal} - they like the Fairy Queen's company too, but only a few at a
+ *     time (see {@link #MAX_QUEEN_FOLLOWERS}), so she is never mobbed.</li>
+ *     <li>Purely passive: struck, a pixie - and any startled nearby - simply flies away
+ *     ({@link FleeGoal}). Nothing here ever fights back.</li>
+ *     <li>Its own voice (see {@code tools/gen_sounds.py}): a twitter of little glass whistles.</li>
  * </ul>
- *
- * <p>"Enjoy being around fairies" has nothing to actually check yet - there's no Fairy mob in
- * this mod at all so far (pixies are, appropriately, the first resident of the Fairy Realm to
- * actually get built). {@link #isKin} is written to check a tag-based family rather than this one
- * concrete class specifically ({@link #isKin}), so adding a real Fairy entity later just means
- * widening that one check - {@link PixieStayNearKinGoal} doesn't need to change at all for that
- * to start working.
  */
-public class PixieEntity extends Allay implements NeutralMob
+public class PixieEntity extends Allay
 {
     private static final int WELLSPRING_SEARCH_RADIUS = 24;
     private static final int WELLSPRING_CHECK_INTERVAL_TICKS = 20;
@@ -64,17 +60,22 @@ public class PixieEntity extends Allay implements NeutralMob
     // its own source of mana" is meant to read as urgent, not just a slower version of the same
     // countdown a pixie already has to manage at home.
     private static final int MANA_DRAIN_OUTSIDE_FAIRY_REALM = 10;
-    private static final int ANGER_DURATION_TICKS = 200;
     private static final int KIN_SEARCH_RADIUS = 16;
+    private static final int FLEE_TICKS = 100;
+    private static final double STARTLE_RADIUS = 8.0;
+    /** How many pixies keep the queen company at once - "two or three," never the whole swarm. */
+    private static final int MAX_QUEEN_FOLLOWERS = 3;
+
+    /** The pixies currently following the queen, across the whole server - weak, so an unloaded one drops out on its own. */
+    private static final Set<PixieEntity> QUEEN_FOLLOWERS = Collections.newSetFromMap(new WeakHashMap<>());
 
     private int manaTicks = MAX_MANA_TICKS;
     private int wellspringCheckCooldown;
 
-    // NeutralMob's own required bookkeeping - same fields/pattern vanilla's own neutral mobs
-    // (bees, piglins, ...) use.
-    private int remainingPersistentAngerTime;
+    /** Who to get away from, and for how much longer - see {@link FleeGoal}. */
     @Nullable
-    private UUID persistentAngerTarget;
+    private UUID fleeFrom;
+    private int fleeTicks;
 
     public PixieEntity(EntityType<? extends Allay> type, Level level)
     {
@@ -90,10 +91,10 @@ public class PixieEntity extends Allay implements NeutralMob
     protected void registerGoals()
     {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2, true));
+        this.goalSelector.addGoal(1, new FleeGoal(this));
+        this.goalSelector.addGoal(4, new FollowQueenGoal(this));
         this.goalSelector.addGoal(6, new PixieFlyNearTreeGoal(this));
         this.goalSelector.addGoal(7, new PixieStayNearKinGoal(this));
-        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, this::isAngryAt));
     }
 
     @Override
@@ -105,7 +106,10 @@ public class PixieEntity extends Allay implements NeutralMob
             this.wellspringCheckCooldown = WELLSPRING_CHECK_INTERVAL_TICKS;
             tickMana();
         }
-        this.updatePersistentAnger((ServerLevel) this.level(), true);
+        if (this.fleeTicks > 0)
+        {
+            this.fleeTicks--;
+        }
     }
 
     private void tickMana()
@@ -147,71 +151,52 @@ public class PixieEntity extends Allay implements NeutralMob
         return false;
     }
 
-    /** Whether {@code other} is the kind of company a pixie enjoys - just other pixies for now, since there's no Fairy mob yet to widen this to. */
+    /** Whether {@code other} is the kind of company a pixie enjoys - other pixies, and the fairies they belong with. */
     public static boolean isKin(Entity other)
     {
-        return other instanceof PixieEntity;
+        return other instanceof PixieEntity || other instanceof FairyEntity;
     }
 
+    /** Struck, it flies - and startles every pixie nearby into flying with it. Nothing fights back. */
     @Override
     public boolean hurt(DamageSource source, float amount)
     {
         boolean hurt = super.hurt(source, amount);
-        if (hurt && !this.level().isClientSide && this.level() instanceof ServerLevel serverLevel)
+        if (hurt && this.level() instanceof ServerLevel serverLevel && source.getEntity() instanceof LivingEntity attacker)
         {
-            LivingEntity attacker = this.getLastHurtByMob();
-            if (attacker != null)
+            startle(attacker);
+            for (PixieEntity other : serverLevel.getEntitiesOfClass(PixieEntity.class, this.getBoundingBox().inflate(STARTLE_RADIUS)))
             {
-                this.setPersistentAngerTarget(attacker.getUUID());
-                this.startPersistentAngerTimer();
-                List<PixieEntity> nearby = serverLevel.getEntitiesOfClass(PixieEntity.class, this.getBoundingBox().inflate(KIN_SEARCH_RADIUS));
-                for (PixieEntity other : nearby)
-                {
-                    other.setPersistentAngerTarget(attacker.getUUID());
-                    other.startPersistentAngerTimer();
-                }
+                other.startle(attacker);
             }
         }
         return hurt;
     }
 
-    @Override
-    public boolean isAngryAt(LivingEntity entity)
+    private void startle(LivingEntity attacker)
     {
-        return entity.getUUID().equals(this.getPersistentAngerTarget());
+        this.fleeFrom = attacker.getUUID();
+        this.fleeTicks = FLEE_TICKS;
     }
 
-    // --- NeutralMob boilerplate - same shape vanilla's own neutral mobs use ---
+    // --- Voice ---
 
     @Override
-    public void setRemainingPersistentAngerTime(int time)
+    protected SoundEvent getAmbientSound()
     {
-        this.remainingPersistentAngerTime = time;
-    }
-
-    @Override
-    public int getRemainingPersistentAngerTime()
-    {
-        return this.remainingPersistentAngerTime;
+        return ModSounds.PIXIE_CHIRP.get();
     }
 
     @Override
-    public void setPersistentAngerTarget(@Nullable UUID target)
+    protected SoundEvent getHurtSound(DamageSource source)
     {
-        this.persistentAngerTarget = target;
-    }
-
-    @Nullable
-    @Override
-    public UUID getPersistentAngerTarget()
-    {
-        return this.persistentAngerTarget;
+        return ModSounds.PIXIE_HURT.get();
     }
 
     @Override
-    public void startPersistentAngerTimer()
+    protected SoundEvent getDeathSound()
     {
-        this.setRemainingPersistentAngerTime(ANGER_DURATION_TICKS);
+        return ModSounds.PIXIE_DEATH.get();
     }
 
     @Override
@@ -219,7 +204,6 @@ public class PixieEntity extends Allay implements NeutralMob
     {
         super.addAdditionalSaveData(tag);
         tag.putInt("PixieManaTicks", this.manaTicks);
-        this.addPersistentAngerSaveData(tag);
     }
 
     @Override
@@ -227,7 +211,181 @@ public class PixieEntity extends Allay implements NeutralMob
     {
         super.readAdditionalSaveData(tag);
         this.manaTicks = tag.contains("PixieManaTicks") ? tag.getInt("PixieManaTicks") : MAX_MANA_TICKS;
-        this.readPersistentAngerSaveData(this.level(), tag);
+    }
+
+    /** Away from whoever struck it - up and off, re-aimed every few ticks as they move - for as long as the fright lasts. */
+    private static final class FleeGoal extends Goal
+    {
+        private static final double FLEE_DISTANCE = 12.0;
+        private static final double FLEE_RISE = 5.0;
+        private static final int RE_AIM_TICKS = 10;
+
+        private final PixieEntity pixie;
+        private int aimTicks;
+
+        FleeGoal(PixieEntity pixie)
+        {
+            this.pixie = pixie;
+            this.setFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        @Override
+        public boolean canUse()
+        {
+            return this.pixie.fleeTicks > 0;
+        }
+
+        @Override
+        public boolean canContinueToUse()
+        {
+            return this.pixie.fleeTicks > 0;
+        }
+
+        @Override
+        public void start()
+        {
+            this.aimTicks = 0;
+            aim();
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick()
+        {
+            return true;
+        }
+
+        @Override
+        public void tick()
+        {
+            if (++this.aimTicks >= RE_AIM_TICKS)
+            {
+                this.aimTicks = 0;
+                aim();
+            }
+        }
+
+        private void aim()
+        {
+            Vec3 away = Vec3.ZERO;
+            if (this.pixie.fleeFrom != null && this.pixie.level() instanceof ServerLevel level
+                    && level.getEntity(this.pixie.fleeFrom) instanceof LivingEntity foe)
+            {
+                away = this.pixie.position().subtract(foe.position());
+            }
+            away = new Vec3(away.x, 0.0, away.z);
+            if (away.lengthSqr() < 1.0E-4)
+            {
+                double angle = this.pixie.getRandom().nextDouble() * Math.PI * 2.0;
+                away = new Vec3(Math.cos(angle), 0.0, Math.sin(angle));
+            }
+            Vec3 target = this.pixie.position().add(away.normalize().scale(FLEE_DISTANCE)).add(0.0, FLEE_RISE, 0.0);
+            this.pixie.getMoveControl().setWantedPosition(target.x, target.y, target.z, 1.6);
+        }
+
+        @Override
+        public void stop()
+        {
+            this.pixie.fleeFrom = null;
+        }
+    }
+
+    /**
+     * Keeping the Fairy Queen company: now and then a pixie that spots her takes to drifting along
+     * beside her for a minute or two, weaving loosely round her as she goes - but only while fewer
+     * than {@link #MAX_QUEEN_FOLLOWERS} others are already doing so, and never for long, so she has
+     * two or three about her rather than the whole swarm.
+     */
+    private static final class FollowQueenGoal extends Goal
+    {
+        private static final double NOTICE_RADIUS = 40.0;
+        private static final double LOSE_RADIUS = 64.0;
+        private static final int MIN_COOLDOWN = 20 * 20;
+        private static final int MAX_COOLDOWN = 20 * 90;
+        private static final int MIN_FOLLOW = 20 * 40;
+        private static final int MAX_FOLLOW = 20 * 120;
+        private static final int RE_AIM_TICKS = 8;
+        private static final double ORBIT_RADIUS = 2.5;
+
+        private final PixieEntity pixie;
+        private int cooldown = 20 * 5;
+        private int followTicks;
+        private int aimTicks;
+        @Nullable
+        private FairyQueenEntity queen;
+
+        FollowQueenGoal(PixieEntity pixie)
+        {
+            this.pixie = pixie;
+            this.setFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        @Override
+        public boolean canUse()
+        {
+            if (--this.cooldown > 0 || this.pixie.fleeTicks > 0
+                    || !this.pixie.level().dimension().equals(ModDimensions.FAIRY_REALM))
+            {
+                return false;
+            }
+            this.cooldown = MIN_COOLDOWN + this.pixie.getRandom().nextInt(MAX_COOLDOWN - MIN_COOLDOWN);
+            QUEEN_FOLLOWERS.removeIf(other -> other.isRemoved() || !other.isAlive());
+            if (QUEEN_FOLLOWERS.size() >= MAX_QUEEN_FOLLOWERS)
+            {
+                return false;
+            }
+            List<FairyQueenEntity> queens = this.pixie.level().getEntitiesOfClass(FairyQueenEntity.class,
+                    this.pixie.getBoundingBox().inflate(NOTICE_RADIUS), FairyQueenEntity::isAlive);
+            if (queens.isEmpty())
+            {
+                return false;
+            }
+            this.queen = queens.get(0);
+            return true;
+        }
+
+        @Override
+        public void start()
+        {
+            QUEEN_FOLLOWERS.add(this.pixie);
+            this.followTicks = MIN_FOLLOW + this.pixie.getRandom().nextInt(MAX_FOLLOW - MIN_FOLLOW);
+            this.aimTicks = 0;
+        }
+
+        @Override
+        public boolean canContinueToUse()
+        {
+            return --this.followTicks > 0 && this.pixie.fleeTicks == 0 && this.queen != null && this.queen.isAlive()
+                    && this.pixie.distanceToSqr(this.queen) < LOSE_RADIUS * LOSE_RADIUS;
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick()
+        {
+            return true;
+        }
+
+        @Override
+        public void tick()
+        {
+            if (++this.aimTicks < RE_AIM_TICKS || this.queen == null)
+            {
+                return;
+            }
+            this.aimTicks = 0;
+            // A loose weave about her, each pixie on its own phase so they never bunch.
+            double angle = (this.pixie.tickCount + this.pixie.getId() * 37) * 0.05;
+            double x = this.queen.getX() + Math.cos(angle) * ORBIT_RADIUS;
+            double z = this.queen.getZ() + Math.sin(angle) * ORBIT_RADIUS;
+            double y = this.queen.getY() + 1.2 + Math.sin(angle * 1.7) * 0.8;
+            this.pixie.getMoveControl().setWantedPosition(x, y, z, 1.1);
+        }
+
+        @Override
+        public void stop()
+        {
+            QUEEN_FOLLOWERS.remove(this.pixie);
+            this.queen = null;
+        }
     }
 
     /** Low priority - eases off toward the World Tree every so often while in the Fairy Realm, rather than actively pathing there constantly (a pixie has its own business; it just likes the neighborhood). */
@@ -330,11 +488,11 @@ public class PixieEntity extends Allay implements NeutralMob
         @Nullable
         private LivingEntity findNearestKin()
         {
-            List<PixieEntity> nearby = this.pixie.level().getEntitiesOfClass(PixieEntity.class,
-                    this.pixie.getBoundingBox().inflate(KIN_SEARCH_RADIUS), other -> other != this.pixie);
+            List<LivingEntity> nearby = this.pixie.level().getEntitiesOfClass(LivingEntity.class,
+                    this.pixie.getBoundingBox().inflate(KIN_SEARCH_RADIUS), other -> other != this.pixie && isKin(other));
             LivingEntity nearest = null;
             double nearestDistSq = TRIGGER_DISTANCE * TRIGGER_DISTANCE;
-            for (PixieEntity other : nearby)
+            for (LivingEntity other : nearby)
             {
                 double distSq = this.pixie.distanceToSqr(other);
                 if (distSq < nearestDistSq)

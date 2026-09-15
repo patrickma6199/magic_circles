@@ -9,14 +9,9 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * The same physical mesh as vanilla's own {@code ElytraModel} (reuses its {@code
- * ModelLayers.ELYTRA} bake layer - no new layer definition needed), but with its own animation
- * method instead of {@code setupAnim}: vanilla's own open/closed wing math is keyed off {@code
- * entity.isFallFlying()}, which this mod never sets (see {@code FairyFlightManager}'s own doc
- * comment for why forcing that flag would fight with forcing the *swimming* pose instead - the
- * two are mutually exclusive in vanilla's own {@code Player#updatePlayerPose}). {@link
- * #setupGlideAnim} takes an explicit {@code gliding} flag instead, so {@code FairyWingsLayer} can
- * drive the open-wing pose from whatever signal it wants (in practice, {@code isSwimming() &&
- * !isInWater()}) without needing the entity's pose to be FALL_FLYING at all.
+ * ModelLayers.ELYTRA} bake layer - no new layer definition needed), with the open/closed wing math
+ * exposed through {@link #setupGlideAnim}'s explicit {@code gliding} flag rather than read inside
+ * {@code setupAnim}, so {@code FairyWingsLayer} decides when the wings are spread.
  */
 public class FairyWingsModel<T extends LivingEntity> extends AgeableListModel<T>
 {
@@ -74,11 +69,21 @@ public class FairyWingsModel<T extends LivingEntity> extends AgeableListModel<T>
             player.elytraRotZ += (openZ - player.elytraRotZ) * 0.1F;
             this.leftWing.xRot = player.elytraRotX;
             this.leftWing.zRot = player.elytraRotZ;
+            if (FairyHover.isHovering(player))
+            {
+                // Hanging still in the air, a Blessed player's wings beat like a fairy's.
+                this.leftWing.zRot += (float) Math.sin(entity.tickCount * 1.1F) * 0.22F;
+            }
         }
         else
         {
             this.leftWing.xRot = openX;
             this.leftWing.zRot = openZ;
+            if (gliding && entity instanceof com.patrickma.magiccircles.entity.FairyEntity)
+            {
+                // A fairy's own wings never stop while it flies - a quick, shallow beat.
+                this.leftWing.zRot += (float) Math.sin(entity.tickCount * 1.1F) * 0.22F;
+            }
         }
 
         this.rightWing.xRot = this.leftWing.xRot;

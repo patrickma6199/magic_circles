@@ -1,0 +1,214 @@
+{
+  "fairy.chatter": {
+    "subtitle": "subtitles.magiccircles.fairy.chatter",
+    "sounds": [
+      "magiccircles:fairy/chatter1",
+      "magiccircles:fairy/chatter2",
+      "magiccircles:fairy/chatter3",
+      "magiccircles:fairy/chatter4",
+      "magiccircles:fairy/chatter5",
+      "magiccircles:fairy/chatter6"
+    ]
+  },
+  "fairy.greet": {
+    "subtitle": "subtitles.magiccircles.fairy.greet",
+    "sounds": [
+      "magiccircles:fairy/greet1",
+      "magiccircles:fairy/greet2",
+      "magiccircles:fairy/greet3"
+    ]
+  },
+  "fairy.hurt": {
+    "subtitle": "subtitles.magiccircles.fairy.hurt",
+    "sounds": [
+      "magiccircles:fairy/hurt1",
+      "magiccircles:fairy/hurt2"
+    ]
+  },
+  "fairy.death": {
+    "subtitle": "subtitles.magiccircles.fairy.death",
+    "sounds": [
+      "magiccircles:fairy/death"
+    ]
+  },
+  "fairy.flutter": {
+    "subtitle": "subtitles.magiccircles.fairy.flutter",
+    "sounds": [
+      {
+        "name": "magiccircles:fairy/flutter",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "fairy.cast": {
+    "subtitle": "subtitles.magiccircles.fairy.cast",
+    "sounds": [
+      "magiccircles:fairy/cast"
+    ]
+  },
+  "fairy.trade": {
+    "subtitle": "subtitles.magiccircles.fairy.trade",
+    "sounds": [
+      "magiccircles:fairy/trade"
+    ]
+  },
+  "fairy.ward_raise": {
+    "subtitle": "subtitles.magiccircles.fairy.ward_raise",
+    "sounds": [
+      "magiccircles:fairy/ward_raise"
+    ]
+  },
+  "fairy.ward_break": {
+    "subtitle": "subtitles.magiccircles.fairy.ward_break",
+    "sounds": [
+      "magiccircles:fairy/ward_break"
+    ]
+  },
+  "fairy.volley": {
+    "subtitle": "subtitles.magiccircles.fairy.volley",
+    "sounds": [
+      "magiccircles:fairy/volley"
+    ]
+  },
+  "ferryman.rumble": {
+    "subtitle": "subtitles.magiccircles.ferryman.rumble",
+    "sounds": [
+      {
+        "name": "magiccircles:ferryman/rumble1",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "magiccircles:ferryman/rumble2",
+        "attenuation_distance": 10
+      },
+      {
+        "name": "magiccircles:ferryman/rumble3",
+        "attenuation_distance": 10
+      }
+    ]
+  },
+  "fluid.wellspring.enter": {
+    "subtitle": "subtitles.magiccircles.fluid.wellspring.enter",
+    "sounds": [
+      "magiccircles:fluid/wellspring/enter1",
+      "magiccircles:fluid/wellspring/enter2"
+    ]
+  },
+  "fluid.wellspring.exit": {
+    "subtitle": "subtitles.magiccircles.fluid.wellspring.exit",
+    "sounds": [
+      "magiccircles:fluid/wellspring/exit1",
+      "magiccircles:fluid/wellspring/exit2"
+    ]
+  },
+  "fluid.wellspring.swim": {
+    "subtitle": "subtitles.magiccircles.fluid.wellspring.swim",
+    "sounds": [
+      "magiccircles:fluid/wellspring/swim1",
+      "magiccircles:fluid/wellspring/swim2",
+      "magiccircles:fluid/wellspring/swim3"
+    ]
+  },
+  "fluid.wellspring.addition": {
+    "subtitle": "subtitles.magiccircles.fluid.wellspring.addition",
+    "sounds": [
+      "magiccircles:fluid/wellspring/addition1",
+      "magiccircles:fluid/wellspring/addition2",
+      "magiccircles:fluid/wellspring/addition3"
+    ]
+  },
+  "fluid.wellspring.submerge": {
+    "subtitle": "subtitles.magiccircles.fluid.wellspring.submerge",
+    "sounds": [
+      "magiccircles:fluid/wellspring/submerge"
+    ]
+  },
+  "fluid.wellspring.surface": {
+    "subtitle": "subtitles.magiccircles.fluid.wellspring.surface",
+    "sounds": [
+      "magiccircles:fluid/wellspring/surface"
+    ]
+  },
+  "fluid.wellspring.loop": {
+    "subtitle": "subtitles.magiccircles.fluid.wellspring.loop",
+    "sounds": [
+      {
+        "name": "magiccircles:fluid/wellspring/loop",
+        "stream": true
+      }
+    ]
+  },
+  "fluid.portal.enter": {
+    "subtitle": "subtitles.magiccircles.fluid.portal.enter",
+    "sounds": [
+      "magiccircles:fluid/portal/enter1",
+      "magiccircles:fluid/portal/enter2"
+    ]
+  },
+  "fluid.portal.exit": {
+    "subtitle": "subtitles.magiccircles.fluid.portal.exit",
+    "sounds": [
+      "magiccircles:fluid/portal/exit1",
+      "magiccircles:fluid/portal/exit2"
+    ]
+  },
+  "fluid.portal.swim": {
+    "subtitle": "subtitles.magiccircles.fluid.portal.swim",
+    "sounds": [
+      "magiccircles:fluid/portal/swim1",
+      "magiccircles:fluid/portal/swim2",
+      "magiccircles:fluid/portal/swim3"
+    ]
+  },
+  "fluid.portal.addition": {
+    "subtitle": "subtitles.magiccircles.fluid.portal.addition",
+    "sounds": [
+      "magiccircles:fluid/portal/addition1",
+      "magiccircles:fluid/portal/addition2",
+      "magiccircles:fluid/portal/addition3"
+    ]
+  },
+  "fluid.portal.submerge": {
+    "subtitle": "subtitles.magiccircles.fluid.portal.submerge",
+    "sounds": [
+      "magiccircles:fluid/portal/submerge"
+    ]
+  },
+  "fluid.portal.surface": {
+    "subtitle": "subtitles.magiccircles.fluid.portal.surface",
+    "sounds": [
+      "magiccircles:fluid/portal/surface"
+    ]
+  },
+  "fluid.portal.loop": {
+    "subtitle": "subtitles.magiccircles.fluid.portal.loop",
+    "sounds": [
+      {
+        "name": "magiccircles:fluid/portal/loop",
+        "stream": true
+      }
+    ]
+  },
+  "pixie.chirp": {
+    "subtitle": "subtitles.magiccircles.pixie.chirp",
+    "sounds": [
+      "magiccircles:pixie/chirp1",
+      "magiccircles:pixie/chirp2",
+      "magiccircles:pixie/chirp3",
+      "magiccircles:pixie/chirp4"
+    ]
+  },
+  "pixie.hurt": {
+    "subtitle": "subtitles.magiccircles.pixie.hurt",
+    "sounds": [
+      "magiccircles:pixie/hurt1",
+      "magiccircles:pixie/hurt2"
+    ]
+  },
+  "pixie.death": {
+    "subtitle": "subtitles.magiccircles.pixie.death",
+    "sounds": [
+      "magiccircles:pixie/death"
+    ]
+  }
+}

@@ -32,9 +32,17 @@ public final class Veil
         {
             return LimboState.isInLimbo(player);
         }
-        if (entity instanceof FerrymanEntity || entity instanceof GhostPhantomEntity)
+        if (entity instanceof GhostPhantomEntity phantom)
         {
-            return true;
+            // Not every phantom is a veiled one - a curse's witness hunts in plain sight, so that
+            // everyone can see what the curser has following them.
+            return phantom.isVeiled();
+        }
+        if (entity instanceof FerrymanEntity ferryman)
+        {
+            // Nor every Ferryman: the one the summoning rite drags into the living world stands
+            // where anybody can walk up to him.
+            return ferryman.isVeiled();
         }
         return entity.getPersistentData().getBoolean(LimboRegistry.PET_GHOST_TAG);
     }
@@ -50,6 +58,14 @@ public final class Veil
      */
     public static boolean visibleTo(Entity self, Player viewer)
     {
-        return isBehindVeil(viewer);
+        // A haunting belongs to exactly one person. Nobody else is ever told it is there, which is
+        // what makes it read as something only the Marked can see rather than a mob that happens
+        // to be standing around - see MarkedByTheDarkManager.
+        if (self instanceof FerrymanEntity ferryman && ferryman.getHauntTarget() != null)
+        {
+            return viewer.getUUID().equals(ferryman.getHauntTarget());
+        }
+        // Deathsight lets the living look across without stepping over - see curse/Deathsight.
+        return isBehindVeil(viewer) || com.patrickma.magiccircles.curse.Deathsight.has(viewer);
     }
 }

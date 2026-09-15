@@ -97,9 +97,46 @@ def marked():
     return img
 
 
+def deathsight():
+    """An open eye in a purple haze - green iris and red-veined white, the split ring's own colours."""
+    img = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+    radial(img, (9, 9), 8.5, (0x3A, 0x10, 0x4A, 210), (0x10, 0x04, 0x18, 0), 1.4)
+    px = img.load()
+    for y in range(SIZE):
+        for x in range(SIZE):
+            dx = (x + 0.5 - 9) / 7.5
+            dy = y + 0.5 - 9
+            if abs(dx) < 1 and abs(dy) <= 3.6 * (1 - dx * dx):
+                px[x, y] = (0xE8, 0xE0, 0xD8, 255)
+    radial(img, (9, 9), 3.2, (0x3F, 0xB8, 0x5A, 255), (0x1E, 0x6A, 0x30, 255), 1.0)
+    radial(img, (9, 9), 1.4, (0x05, 0x02, 0x08, 255), (0x05, 0x02, 0x08, 255), 1.0)
+    for (x, y) in ((3, 9), (4, 8), (14, 9), (13, 10), (5, 10)):
+        px[x, y] = (0xB0, 0x22, 0x2A, 255)
+    return img
+
+
+def indebted():
+    """A gold coin with a keyhole struck through it - something owed, and not yet paid."""
+    img = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+    radial(img, (9, 9), 8.5, (0x5A, 0x44, 0x10, 170), (0x20, 0x16, 0x04, 0), 1.4)
+    radial(img, (9, 9), 6.0, (0xFF, 0xE2, 0x8A, 255), (0xC9, 0x96, 0x2E, 255), 1.1)
+    px = img.load()
+    for y in range(SIZE):
+        for x in range(SIZE):
+            d = ((x + 0.5 - 9) ** 2 + (y + 0.5 - 9) ** 2) ** 0.5
+            if 5.2 <= d <= 6.0:
+                px[x, y] = (0x8A, 0x62, 0x18, 255)
+    for (x, y) in ((7, 5), (8, 5), (9, 5), (10, 5), (7, 6), (8, 6), (9, 6), (10, 6),
+                   (8, 7), (9, 7), (8, 8), (9, 8), (8, 9), (9, 9), (8, 10), (9, 10), (8, 11), (9, 11)):
+        px[x, y] = (0x2A, 0x1C, 0x08, 255)
+    sparkle(img, 13, 4, (0xFF, 0xFF, 0xE0, 230), 2)
+    return img
+
+
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
-    for name, img in (("blessed_by_wellspring", blessed()), ("marked_by_the_dark", marked())):
+    for name, img in (("blessed_by_wellspring", blessed()), ("marked_by_the_dark", marked()),
+                      ("deathsight", deathsight()), ("indebted", indebted())):
         path = os.path.join(OUT_DIR, f"{name}.png")
         img.save(path)
         print(f"wrote {path}")

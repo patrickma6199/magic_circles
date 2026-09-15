@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/fence_post",
+  "textures": {
+    "texture": "magiccircles:block/living_wood_planks"
+  }
+}

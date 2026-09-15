@@ -73,6 +73,23 @@ public class PlayerCorpseEntity extends Mob
         // Intentionally none - a corpse has no behavior of any kind.
     }
 
+    /**
+     * Keeps the body lying the way it fell. A mob's body slowly turns to follow its head, and a
+     * corpse's head never moves - it was left pointing south - so the body used to swing round on
+     * its own after landing, while its name was still placed from the way it had fallen. Whenever
+     * the two disagreed by enough, the name ended up past the feet instead of over the head.
+     */
+    @Override
+    public void tick()
+    {
+        super.tick();
+        float facing = this.getYRot();
+        this.yBodyRot = facing;
+        this.yBodyRotO = facing;
+        this.yHeadRot = facing;
+        this.yHeadRotO = facing;
+    }
+
     @Override
     protected void defineSynchedData()
     {

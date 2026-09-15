@@ -36,4 +36,25 @@ public class FairyPortalWaterBlock extends LiquidBlock
     {
         super(fluid, properties);
     }
+
+    /** Always ticking, so a leftover block always gets its chance to go back to water - see {@link #randomTick}. */
+    @Override
+    public boolean isRandomlyTicking(net.minecraft.world.level.block.state.BlockState state)
+    {
+        return true;
+    }
+
+    /**
+     * Portal fluid no open portal owns - left behind when the server forgot its portals on restart -
+     * quietly becomes the plain water it was before the portal opened.
+     */
+    @Override
+    public void randomTick(net.minecraft.world.level.block.state.BlockState state, net.minecraft.server.level.ServerLevel level,
+                           net.minecraft.core.BlockPos pos, net.minecraft.util.RandomSource random)
+    {
+        if (!com.patrickma.magiccircles.FairyPortalManager.isLivePortalWater(level, pos))
+        {
+            level.setBlockAndUpdate(pos, net.minecraft.world.level.block.Blocks.WATER.defaultBlockState());
+        }
+    }
 }

@@ -139,6 +139,29 @@ public final class WellspringOcean
     }
 
     /** Called explicitly from {@link WorldTree#placeIfNeeded} - see this class's own doc comment on why. */
+    /**
+     * Whether a spot is down in the Wellspring's sea - under the island and within the cavity's
+     * widest reach. Loose on purpose, since the cavity's exact edge is noise nothing else
+     * recomputes: anything this deep and this close under the well is the sea, or the rock round it.
+     */
+    public static boolean inSea(BlockPos pos)
+    {
+        BlockPos well = WorldTree.wellCenter();
+        return Math.hypot(pos.getX() - well.getX(), pos.getZ() - well.getZ()) <= seaReach() && pos.getY() <= seaCeilingY();
+    }
+
+    /** How far out from under the well the sea can reach, its noisy edge included. */
+    public static double seaReach()
+    {
+        return MAX_HORIZONTAL_RADIUS + EDGE_NOISE_AMPLITUDE;
+    }
+
+    /** The highest the sea's ceiling ever rises. */
+    public static int seaCeilingY()
+    {
+        return FairyRealmChunkGenerator.groundY() - 1 - TOP_BUFFER + (int) Math.ceil(CEILING_NOISE_AMPLITUDE);
+    }
+
     public static synchronized void carveIfNeeded(ServerLevel fairyRealm)
     {
         OceanSavedData saved = fairyRealm.getDataStorage().computeIfAbsent(OceanSavedData::load, OceanSavedData::new, "magiccircles_wellspring_ocean");

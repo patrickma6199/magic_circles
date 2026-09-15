@@ -7,7 +7,18 @@
   "mixins": [
     "EntityMixin",
     "ServerPlayerMixin",
-    "PlayerMixin"
+    "PlayerMixin",
+    "LivingEntityMixin",
+    "ChunkMapAccessor",
+    "TrackedEntityInvoker",
+    "BaseFireBlockMixin",
+    "ServerLevelMixin"
+  ],
+  "client": [
+    "client.LivingEntityRendererMixin",
+    "client.ItemInHandRendererMixin",
+    "client.PlayerRendererMixin",
+    "client.HumanoidModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

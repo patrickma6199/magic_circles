@@ -109,10 +109,11 @@ public class BookOfTheFayeBlock extends BaseEntityBlock
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type)
     {
-        // Client-only - nothing here needs to run server-side at all (see BookOfTheFayeBlockEntity's own doc comment).
+        // The client animates; the server only keeps an eye on whoever is reading it.
         return level.isClientSide
                 ? createTickerHelper(type, ModBlockEntities.BOOK_OF_THE_FAYE.get(), BookOfTheFayeBlockEntity::clientTick)
-                : null;
+                : createTickerHelper(type, ModBlockEntities.BOOK_OF_THE_FAYE.get(),
+                        com.patrickma.magiccircles.block.entity.ReadableBookBlockEntity::serverTick);
     }
 
     @Override
@@ -123,7 +124,12 @@ public class BookOfTheFayeBlock extends BaseEntityBlock
             // Delegates entirely to BookOfTheFayeScreenOpener - this class (loaded on a dedicated
             // server too, since it's a registered Block) must never itself reference
             // Minecraft/BookViewScreen directly - see that class's own doc comment.
-            com.patrickma.magiccircles.client.BookOfTheFayeScreenOpener.open();
+            com.patrickma.magiccircles.client.BookOfTheFayeScreenOpener.open(pos);
+        }
+        else if (level.getBlockEntity(pos) instanceof BookOfTheFayeBlockEntity book)
+        {
+            // So everyone else sees it open and turn toward whoever is reading.
+            book.startReading(player);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

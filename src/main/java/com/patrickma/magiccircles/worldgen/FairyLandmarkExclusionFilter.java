@@ -29,7 +29,12 @@ public final class FairyLandmarkExclusionFilter extends PlacementModifier
     public static final FairyLandmarkExclusionFilter INSTANCE = new FairyLandmarkExclusionFilter();
     public static final Codec<FairyLandmarkExclusionFilter> CODEC = Codec.unit(INSTANCE);
 
-    private static final double TREE_BUFFER = 5.0;
+    // Narrowed from 5 so the treeline creeps closer to both landmarks. This is the smaller half of
+    // the exclusion - the flat disc's own radius is the bulk of it (see
+    // FairyRealmChunkGenerator#flatRadius) - so it is deliberately not taken all the way to zero:
+    // some gap is what stops a canopy from overhanging the perfectly circular flat disc and being
+    // clipped away in one clean arc, which is the artifact this buffer exists to prevent.
+    private static final double TREE_BUFFER = 2.0;
 
     private FairyLandmarkExclusionFilter()
     {

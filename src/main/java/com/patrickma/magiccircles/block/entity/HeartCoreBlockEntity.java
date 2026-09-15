@@ -176,7 +176,8 @@ public class HeartCoreBlockEntity extends BlockEntity
 
     private static final int MANA_FONT_DURATION_TICKS = 20 * 60;
     private static final int MANA_FONT_INTERVAL_TICKS = 20 * 3;
-    private static final int MANA_FONT_AMOUNT = 15;
+    /** Twenty draws of fifty over the minute: a thousand - one session fills any heart, however empty. */
+    private static final int MANA_FONT_AMOUNT = 50;
 
     private static final int BLOOM_REGEN_DURATION_TICKS = 20 * 10;
 
@@ -260,6 +261,14 @@ public class HeartCoreBlockEntity extends BlockEntity
     // (ClientHeartWisps), rather than either just quietly doing nothing forever.
     private boolean manaDepleted;
 
+    /**
+     * The commission of the Heartstone that became this heart, if it had one - kept safe while the
+     * stone rests here as a heart (being charged, most often) and handed back when it is taken up
+     * again. Never cast by the heart itself: a heart's own spells always come from its ring.
+     */
+    @Nullable
+    private HeartSpell carriedSpell;
+
     public HeartCoreBlockEntity(BlockPos pos, BlockState state)
     {
         super(ModBlockEntities.HEART_CORE.get(), pos, state);
@@ -316,6 +325,18 @@ public class HeartCoreBlockEntity extends BlockEntity
         return age;
     }
 
+    public void setCarriedSpell(@Nullable HeartSpell spell)
+    {
+        this.carriedSpell = spell;
+        setChanged();
+    }
+
+    @Nullable
+    public HeartSpell carriedSpell()
+    {
+        return carriedSpell;
+    }
+
     /**
      * The reverse of {@link com.patrickma.magiccircles.item.HeartstoneItem#useOn}: instead of a
      * blank Heartstone consuming a complete ring to become this Heart Core, this Heart Core (with
@@ -325,9 +346,11 @@ public class HeartCoreBlockEntity extends BlockEntity
      * the player has {@link com.patrickma.magiccircles.registry.ModEffects#BLESSED_BY_WELLSPRING}
      * (checked by the caller, {@code HeartCoreBlock#interact}) and empty-handed.
      *
-     * <p>{@link HeartSpell#MANA_FONT} refuses here specifically - charging a heart's own mana
-     * from a nearby Wellspring makes no sense once there's no heart left to charge, so it's the
-     * one spell that can never be commanded this way (a commanded Heartstone can never hold it).
+     * <p>A stone that was already commanded when it was set here comes back commanded to the same
+     * spell, whatever ring it rested in ({@link #carriedSpell}) - only the Cleansing unmakes a
+     * commission. A Mana Font ring never commands anything: it is how a stone is charged, so taking
+     * the stone back off one returns it full and exactly as it was, commanded or blank. (Mana Font
+     * itself can never be a commission - it has nothing to charge once the heart is gone.)
      */
     public InteractionResult absorbRingIntoHeartstone(ServerLevel level, Player player, InteractionHand hand)
     {
@@ -347,11 +370,8 @@ public class HeartCoreBlockEntity extends BlockEntity
             player.displayClientMessage(Component.translatable("block.magiccircles.heart_core.spell_not_recognized").withStyle(ChatFormatting.RED), true);
             return InteractionResult.CONSUME;
         }
-        if (spell == HeartSpell.MANA_FONT)
-        {
-            player.displayClientMessage(Component.translatable("block.magiccircles.heart_core.not_valid_to_command").withStyle(ChatFormatting.RED), true);
-            return InteractionResult.CONSUME;
-        }
+        HeartSpell commission = carriedSpell != null ? carriedSpell
+                : spell == HeartSpell.MANA_FONT ? null : spell;
 
         int mana = getMana();
         BlockPos pos = worldPosition.immutable();
@@ -398,7 +418,10 @@ public class HeartCoreBlockEntity extends BlockEntity
 
             ItemStack stack = new ItemStack(com.patrickma.magiccircles.registry.ModItems.HEARTSTONE.get());
             HeartstoneItem.setMana(stack, mana);
-            HeartstoneItem.setCommandedSpell(stack, spell);
+            if (commission != null)
+            {
+                HeartstoneItem.setCommandedSpell(stack, commission);
+            }
             if (absorbingPlayer != null)
             {
                 if (!absorbingPlayer.getInventory().add(stack))
@@ -1580,6 +1603,10 @@ public class HeartCoreBlockEntity extends BlockEntity
         tag.putInt("VitalSurgeDrainCountdown", vitalSurgeDrainCountdown);
         tag.putInt("VitalSurgeReapplyCountdown", vitalSurgeReapplyCountdown);
         tag.putBoolean("ManaDepleted", manaDepleted);
+        if (carriedSpell != null)
+        {
+            tag.putString("CarriedSpell", carriedSpell.name());
+        }
     }
 
     @Override
@@ -1587,6 +1614,18 @@ public class HeartCoreBlockEntity extends BlockEntity
     {
         super.load(tag);
         mana = tag.getInt("Mana");
+        carriedSpell = null;
+        if (tag.contains("CarriedSpell"))
+        {
+            try
+            {
+                carriedSpell = HeartSpell.valueOf(tag.getString("CarriedSpell"));
+            }
+            catch (IllegalArgumentException ignored)
+            {
+                // A spell renamed or removed since this was saved - the stone simply comes back blank.
+            }
+        }
         stormTicksRemaining = tag.getInt("StormTicksRemaining");
         centerColor = readColor(tag);
         wispChannel = readChannel(tag);

@@ -51,8 +51,17 @@ public class DreamElkEntity extends Horse
     /** Below this much horizontal movement per tick the elk counts as standing still, and idles rather than walks. */
     private static final double MOVING_THRESHOLD_SQR = 1.0E-6;
 
-    /** Set when the elk has been given seeds or a flower, spent when chalk is pressed to its antlers. */
-    private boolean hasGift;
+    /** How long an elk takes over a pinch of Arcane Dust before the Red Chalk comes out - five seconds. */
+    private static final int DIGEST_TICKS = 100;
+    private static final int GRUMBLE_INTERVAL_TICKS = 20;
+    /** The elk has no voice of its own yet (see {@link #playSound}), so it borrows a few while it digests. */
+    private static final SoundEvent[] GRUMBLES = {
+            net.minecraft.sounds.SoundEvents.CAMEL_AMBIENT, net.minecraft.sounds.SoundEvents.COW_AMBIENT,
+            net.minecraft.sounds.SoundEvents.LLAMA_AMBIENT, net.minecraft.sounds.SoundEvents.GOAT_AMBIENT
+    };
+
+    /** Ticks left before the Red Chalk comes out - zero when the elk isn't digesting anything. */
+    private int digestTicks;
 
     public final AnimationState idleAnimationState = new AnimationState();
     public final AnimationState eatAnimationState = new AnimationState();
@@ -112,71 +121,106 @@ public class DreamElkEntity extends Horse
         {
             updateAnimationStates();
         }
+        else
+        {
+            tickDigestion();
+        }
     }
 
     /**
-     * Offerings and chalk. Feed an elk seeds or a flower and it carries the gift; chalk pressed
-     * into its antlers afterwards comes away Red. The gift is spent in the exchange, so each piece
-     * of chalk costs its own offering, and the chalk keeps whatever it had left - the same rule
-     * every other way of tinting chalk follows (see {@code recipe/ChalkTintRecipe}).
+     * Red Chalk, and the only way there is to get it. Feed an elk a pinch of Arcane Dust and it eats
+     * it, stands there grumbling about it for five seconds, and then passes a fresh stick of Red
+     * Chalk out behind it. One pinch, one stick - it won't take another until it's done.
      */
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand)
     {
         ItemStack held = player.getItemInHand(hand);
-
-        if (!hasGift && isOffering(held))
+        if (held.is(ModItems.ARCANE_DUST.get()))
         {
+            if (digestTicks > 0)
+            {
+                // Still busy with the last one - taken as handled, so it doesn't fall through to mounting.
+                return InteractionResult.sidedSuccess(this.level().isClientSide);
+            }
             if (!this.level().isClientSide)
             {
-                hasGift = true;
+                digestTicks = DIGEST_TICKS;
                 if (!player.getAbilities().instabuild)
                 {
                     held.shrink(1);
                 }
+                this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        net.minecraft.sounds.SoundEvents.GENERIC_EAT, this.getSoundSource(), 1.0f, 0.8f);
                 this.level().broadcastEntityEvent(this, (byte) 18);
             }
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
-
-        if (hasGift && held.getItem() instanceof ChalkItem && held.getItem() == ModItems.CHALK.get())
-        {
-            if (!this.level().isClientSide)
-            {
-                ItemStack red = new ItemStack(ModItems.RED_CHALK.get());
-                red.setDamageValue(held.getDamageValue());
-                held.shrink(1);
-                if (!player.getInventory().add(red))
-                {
-                    player.drop(red, false);
-                }
-                hasGift = false;
-                this.level().broadcastEntityEvent(this, (byte) 18);
-            }
-            return InteractionResult.sidedSuccess(this.level().isClientSide);
-        }
-
         return super.mobInteract(player, hand);
     }
 
-    /** Grass seeds or any flower - what an elk will actually take from your hand. */
-    private static boolean isOffering(ItemStack stack)
+    /** One tick of digesting: standing still, grumbling now and then, and at the end, the chalk. */
+    private void tickDigestion()
     {
-        return stack.is(Items.WHEAT_SEEDS) || stack.is(ItemTags.FLOWERS);
+        if (digestTicks <= 0)
+        {
+            return;
+        }
+        digestTicks--;
+        this.getNavigation().stop();
+        if (digestTicks == 0)
+        {
+            passRedChalk();
+            return;
+        }
+        if (digestTicks % GRUMBLE_INTERVAL_TICKS == 0)
+        {
+            SoundEvent grumble = GRUMBLES[this.random.nextInt(GRUMBLES.length)];
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), grumble, this.getSoundSource(),
+                    0.9f, 0.6f + this.random.nextFloat() * 0.3f);
+        }
+    }
+
+    /** Out the back end - dropped just behind the hindquarters, rolling away from them. */
+    private void passRedChalk()
+    {
+        float yaw = this.yBodyRot * net.minecraft.util.Mth.DEG_TO_RAD;
+        // Facing is (-sin, cos) in Minecraft's own convention, so behind is its reverse.
+        double backX = net.minecraft.util.Mth.sin(yaw);
+        double backZ = -net.minecraft.util.Mth.cos(yaw);
+        double reach = this.getBbWidth() * 0.5 + 0.2;
+        double x = this.getX() + backX * reach;
+        double y = this.getY() + this.getBbHeight() * 0.45;
+        double z = this.getZ() + backZ * reach;
+
+        net.minecraft.world.entity.item.ItemEntity chalk = new net.minecraft.world.entity.item.ItemEntity(
+                this.level(), x, y, z, new ItemStack(ModItems.RED_CHALK.get()));
+        chalk.setDeltaMovement(backX * 0.15, 0.05, backZ * 0.15);
+        chalk.setDefaultPickUpDelay();
+        this.level().addFreshEntity(chalk);
+
+        this.level().playSound(null, x, y, z, net.minecraft.sounds.SoundEvents.CHICKEN_EGG, this.getSoundSource(), 1.0f, 0.5f);
+        this.level().playSound(null, x, y, z, net.minecraft.sounds.SoundEvents.SLIME_SQUISH_SMALL, this.getSoundSource(), 0.8f, 0.8f);
+        if (this.level() instanceof net.minecraft.server.level.ServerLevel server)
+        {
+            server.sendParticles(new net.minecraft.core.particles.DustParticleOptions(
+                            new org.joml.Vector3f(0.85f, 0.3f, 0.28f), 1.0f),
+                    x, y, z, 8, 0.12, 0.12, 0.12, 0.0);
+        }
     }
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag)
     {
         super.addAdditionalSaveData(tag);
-        tag.putBoolean("HasGift", hasGift);
+        tag.putInt("Digesting", digestTicks);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag)
     {
         super.readAdditionalSaveData(tag);
-        hasGift = tag.getBoolean("HasGift");
+        digestTicks = tag.getInt("Digesting");
     }
 
     /**
@@ -289,6 +333,25 @@ public class DreamElkEntity extends Horse
         {
             this.level().setBlockAndUpdate(pos, flower);
         }
+    }
+
+    /**
+     * Ridden, a tamed elk jumps the way it leaps on its own - {@value #LEAP_HEIGHT} blocks up and,
+     * pressing forward, {@value #LEAP_DISTANCE} out the way it faces - rather than a horse's hop. The
+     * jump bar still decides how much of that it puts in: a full charge is the whole leap.
+     */
+    @Override
+    protected void executeRidersJump(float strength, Vec3 input)
+    {
+        double height = LEAP_HEIGHT * strength * this.getBlockJumpFactor();
+        double vertical = Math.sqrt(2.0 * LeapGoal.GRAVITY * height) + this.getJumpBoostPower();
+        double timeToPeak = vertical / LeapGoal.GRAVITY;
+        double horizontal = input.z > 0.0 ? (LEAP_DISTANCE * strength / (2.0 * timeToPeak)) * HORIZONTAL_DRAG_COMPENSATION : 0.0;
+        double yaw = Math.toRadians(this.getYRot());
+        this.setDeltaMovement(-Math.sin(yaw) * horizontal, vertical, Math.cos(yaw) * horizontal);
+        this.setIsJumping(true);
+        this.hasImpulse = true;
+        net.minecraftforge.common.ForgeHooks.onLivingJump(this);
     }
 
     /**

@@ -11,6 +11,7 @@ import com.patrickma.magiccircles.network.ModNetworking;
 import com.patrickma.magiccircles.registry.ModItems;
 import com.patrickma.magiccircles.registry.ModPlacementModifiers;
 import com.patrickma.magiccircles.registry.ModRecipeSerializers;
+import com.patrickma.magiccircles.registry.ModSounds;
 import com.patrickma.magiccircles.registry.ModTreeDecorators;
 import com.patrickma.magiccircles.registry.ModWorldgen;
 import net.minecraft.world.entity.Mob;
@@ -35,6 +36,7 @@ public class MagicCircles
         var modEventBus = context.getModEventBus();
 
         ModEffects.EFFECTS.register(modEventBus);
+        ModSounds.SOUND_EVENTS.register(modEventBus);
         ModFluidTypes.FLUID_TYPES.register(modEventBus);
         ModFluids.FLUIDS.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);
@@ -56,11 +58,14 @@ public class MagicCircles
     private void registerAttributes(EntityAttributeCreationEvent event)
     {
         event.put(ModEntities.PIXIE.get(), com.patrickma.magiccircles.entity.PixieEntity.createAttributes().build());
+        event.put(ModEntities.FAIRY.get(), com.patrickma.magiccircles.entity.FairyEntity.createAttributes().build());
+        event.put(ModEntities.FAIRY_QUEEN.get(), com.patrickma.magiccircles.entity.FairyQueenEntity.createAttributes().build());
         event.put(ModEntities.MANA_WYRM.get(), com.patrickma.magiccircles.entity.ManaWyrmEntity.createAttributes().build());
         event.put(ModEntities.DREAM_ELK.get(), com.patrickma.magiccircles.entity.DreamElkEntity.createAttributes().build());
         event.put(ModEntities.FERRYMAN.get(), com.patrickma.magiccircles.entity.FerrymanEntity.createAttributes().build());
         event.put(ModEntities.GHOST_PHANTOM.get(), com.patrickma.magiccircles.entity.GhostPhantomEntity.createAttributes().build());
         event.put(ModEntities.PLAYER_CORPSE.get(), com.patrickma.magiccircles.entity.PlayerCorpseEntity.createAttributes().build());
+        event.put(ModEntities.CREATURE_CORPSE.get(), com.patrickma.magiccircles.entity.CreatureCorpseEntity.createAttributes().build());
     }
 
     /**
@@ -77,12 +82,10 @@ public class MagicCircles
         event.enqueueWork(() -> SpawnPlacements.register(ModEntities.PIXIE.get(),
                 SpawnPlacements.Type.NO_RESTRICTIONS, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Mob::checkMobSpawnRules));
-        // IN_WATER + a plain "is this actually a water block" check - the same idea vanilla's own
-        // fish use, just spelled out directly rather than borrowed from a fish-specific vanilla
-        // predicate (there isn't a convenient public one to reuse here).
+        // IN_WATER, and only once the wyrms have scattered out of the Wellspring's sea - and then
+        // only a few, in the open waters far from the Ancient Heartstone (see WyrmScattering).
         event.enqueueWork(() -> SpawnPlacements.register(ModEntities.MANA_WYRM.get(),
-                SpawnPlacements.Type.IN_WATER, Heightmap.Types.OCEAN_FLOOR_WG,
-                (type, level, spawnType, pos, random) -> level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)));
+                SpawnPlacements.Type.IN_WATER, Heightmap.Types.OCEAN_FLOOR_WG, WyrmScattering::canSpawn));
         // Ordinary land spawning, for the surface population (see data/magiccircles/worldgen/biome/fairy_realm.json's
         // own "creature" entry) - the *guaranteed* population that can start submerged in the
         // Wellspring's own underground ocean is a direct world-init placement instead (see

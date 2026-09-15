@@ -33,6 +33,7 @@ public final class LimboState
     private static final String CORPSE_DIM = "CorpseDim";
     private static final String DEATH_TIME = "DeathTime";
     private static final String FERRYMAN_UUID = "FerrymanUuid";
+    private static final String POLTERGEIST = "Poltergeist";
 
     private LimboState()
     {
@@ -105,6 +106,17 @@ public final class LimboState
     }
 
     /** Wipes every trace - called once someone has genuinely stopped being dead, whichever way that happened. */
+    /** A ghost who died carrying a curse - see {@link Poltergeist}. Cleared with everything else on return. */
+    public static boolean isPoltergeist(Player player)
+    {
+        return isGhost(player) && root(player).getBoolean(POLTERGEIST);
+    }
+
+    public static void makePoltergeist(Player player)
+    {
+        mutableRoot(player).putBoolean(POLTERGEIST, true);
+    }
+
     public static void clear(Player player)
     {
         player.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).remove(ROOT);

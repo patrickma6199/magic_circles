@@ -46,6 +46,14 @@ public class ClientSetup
         // default solid layer) is what makes the transparent pixels around the strand see-through.
         event.enqueueWork(() -> ItemBlockRenderTypes.setRenderLayer(ModBlocks.GLITTER_WEED.get(), RenderType.cutout()));
         event.enqueueWork(() -> ItemBlockRenderTypes.setRenderLayer(ModBlocks.GLITTER_WEED_PLANT.get(), RenderType.cutout()));
+
+        // Swaps the athame's icon for the bloodied one whenever it carries a signature - see
+        // item/AthameItem and the override in models/item/athame.json.
+        event.enqueueWork(() -> net.minecraft.client.renderer.item.ItemProperties.register(
+                com.patrickma.magiccircles.registry.ModItems.ATHAME.get(),
+                new ResourceLocation(MagicCircles.MOD_ID, "signed"),
+                (stack, level, entity, seed) ->
+                        com.patrickma.magiccircles.item.AthameItem.isSigned(stack) ? 1.0f : 0.0f));
     }
 
     /** The Fairy Realm's custom blue-and-gold sky - see {@link FairyRealmEffects}. */
@@ -61,6 +69,7 @@ public class ClientSetup
         event.registerLayerDefinition(HeartCoreModel.LAYER, HeartCoreModel::createBodyLayer);
         event.registerLayerDefinition(ShieldOrbModel.LAYER, ShieldOrbModel::createBodyLayer);
         event.registerLayerDefinition(DreamElkModel.LAYER, DreamElkModel::createBodyLayer);
+        event.registerLayerDefinition(QueenWingsModel.LAYER, QueenWingsModel::createBodyLayer);
         // (AncientHeartstoneWisps/AncientHeartstoneRenderer need no layer of their own registered
         // here - the renderer reuses HeartCoreModel.LAYER, already registered above.)
     }
@@ -70,13 +79,19 @@ public class ClientSetup
     {
         event.registerBlockEntityRenderer(ModBlockEntities.HEART_CORE.get(), HeartCoreBlockEntityRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.BOOK_OF_THE_FAYE.get(), BookOfTheFayeBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.ART_OF_BLOOD.get(), ArtOfBloodBlockEntityRenderer::new);
         event.registerEntityRenderer(ModEntities.SHIELD_ORB.get(), ShieldOrbRenderer::new);
         event.registerEntityRenderer(ModEntities.PIXIE.get(), PixieRenderer::new);
+        event.registerEntityRenderer(ModEntities.FAIRY.get(), FairyRenderer::new);
+        event.registerEntityRenderer(ModEntities.FAIRY_QUEEN.get(), FairyQueenRenderer::new);
+        // A wisp in flight is nothing but its own trail of particles - see WispMissileEntity.
+        event.registerEntityRenderer(ModEntities.WISP_MISSILE.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
         event.registerEntityRenderer(ModEntities.MANA_WYRM.get(), ManaWyrmRenderer::new);
         event.registerEntityRenderer(ModEntities.ANCIENT_HEARTSTONE.get(), AncientHeartstoneRenderer::new);
         event.registerEntityRenderer(ModEntities.DREAM_ELK.get(), DreamElkRenderer::new);
         event.registerEntityRenderer(ModEntities.FERRYMAN.get(), FerrymanRenderer::new);
         event.registerEntityRenderer(ModEntities.PLAYER_CORPSE.get(), PlayerCorpseRenderer::new);
+        event.registerEntityRenderer(ModEntities.CREATURE_CORPSE.get(), CreatureCorpseRenderer::new);
         // Plain vanilla Phantom look - only the AI/targeting differs (see entity/GhostPhantomEntity).
         event.registerEntityRenderer(ModEntities.GHOST_PHANTOM.get(), PhantomRenderer::new);
     }

@@ -14,29 +14,65 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * The Fairy Realm's permanent rainstorm - raining and thundering (lightning included), always -
- * and its "no fire" rule.
+ * The Fairy Realm's own weather, and its "no fire" rule.
  *
- * <p><b>Weather.</b> {@link #onServerTick} keeps the dimension permanently raining and
- * thundering via {@link ServerLevel#setWeatherParameters}. Lightning is left free to strike
- * anywhere, island included - now that the whole realm sits inside {@link FairyRealmShield}'s own
- * boundary, there's no separate "outside the island" to confine it to, and the existing
- * fire-disable rules below already make sure a strike can't actually set anything ablaze.
+ * <p><b>Weather.</b> The realm has weather of its own. Vanilla gives every dimension but the
+ * overworld the overworld's weather, and quietly ignores any attempt to set it there - so an
+ * earlier "permanent storm" here, set through {@link ServerLevel#setWeatherParameters}, never rained
+ * at all. Now {@code mixin/ServerLevelMixin} asks {@link #isRaining} instead, and it rains: now and
+ * then of its own accord ({@link #onServerTick}), whenever the queen's wrath is roused ({@code
+ * entity/FairyQueenEntity}), and a long while when a queen falls ({@code FairyCourt}). Never
+ * thunder - a thunderstorm's own stray lightning would strike the Faye themselves.
  *
- * <p><b>Fire.</b> Vanilla doesn't expose a per-dimension "fire never spreads/never appears" flag
- * either (the closest, the {@code doFireTick} game rule, is shared by every dimension on the
- * server, so setting it here would also turn off fire in the Overworld). Instead this blocks fire
- * at its two realistic sources in this dimension - flint & steel / fire charges ({@link
- * #onRightClick}) and any fire block that does manage to get placed ({@link #onFirePlaced}) - and
- * makes sure nothing standing here can actually be harmed or stay lit by fire ({@link
- * #onLivingHurt}, {@link #onServerTick}'s fire-clearing pass), which covers the cases those two
- * can't (an explosion igniting a block directly, say).
+ * <p><b>Fire.</b> There is none here, from any source. Vanilla has no per-dimension switch for it
+ * (the {@code doFireTick} game rule is shared by every dimension on the server), so fire is put out
+ * at the block itself: {@code mixin/BaseFireBlockMixin} removes every fire block the moment it is
+ * set in this dimension - spread, lava, lightning, fireballs and all - and refuses flint & steel,
+ * fire charges and dispensers outright, using {@link #isFireless}. What's here as well: {@link
+ * #onRightClick} stops a lighter from doing anything else (lighting a campfire, priming TNT),
+ * {@link #onFirePlaced} is the older catch for fire placed by an entity, and nothing standing here
+ * can be harmed or stay lit by fire ({@link #onLivingHurt}, {@link #onServerTick}'s fire-clearing
+ * pass).
  */
 @Mod.EventBusSubscriber(modid = MagicCircles.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class FairyRealmWeather
 {
+    /** Left to itself, the realm rains a few minutes at a time, with a good long while between. */
+    private static final int NATURAL_RAIN_MIN = 20 * 60 * 2;
+    private static final int NATURAL_RAIN_RANDOM = 20 * 60 * 4;
+    private static final int NATURAL_CLEAR_MIN = 20 * 60 * 10;
+    private static final int NATURAL_CLEAR_RANDOM = 20 * 60 * 20;
+
+    private static int rainTicks;
+    private static int nextNaturalRain = NATURAL_CLEAR_MIN;
+
     private FairyRealmWeather()
     {
+    }
+
+    /** Rain over the whole realm for at least this long - never cutting short rain that would have lasted longer. */
+    public static void rainFor(int ticks)
+    {
+        rainTicks = Math.max(rainTicks, ticks);
+    }
+
+    /** Whether it is raining in the Fairy Realm - what {@code mixin/ServerLevelMixin} tells the realm. */
+    public static boolean isRaining()
+    {
+        return rainTicks > 0;
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event)
+    {
+        rainTicks = 0;
+        nextNaturalRain = NATURAL_CLEAR_MIN;
+    }
+
+    /** Whether fire is forbidden in this level - true only for the Fairy Realm. */
+    public static boolean isFireless(net.minecraft.world.level.Level level)
+    {
+        return level.dimension().equals(ModDimensions.FAIRY_REALM);
     }
 
     @SubscribeEvent
@@ -52,11 +88,14 @@ public final class FairyRealmWeather
             return;
         }
 
-        // A big fixed duration, refreshed constantly - simpler than hooking the weather-cleared
-        // event to immediately re-storm, and functionally identical ("always a rainstorm").
-        if (!fairyRealm.isThundering() || !fairyRealm.isRaining())
+        if (rainTicks > 0)
         {
-            fairyRealm.setWeatherParameters(0, 12000, true, true);
+            rainTicks--;
+        }
+        else if (--nextNaturalRain <= 0)
+        {
+            rainFor(NATURAL_RAIN_MIN + fairyRealm.random.nextInt(NATURAL_RAIN_RANDOM));
+            nextNaturalRain = NATURAL_CLEAR_MIN + fairyRealm.random.nextInt(NATURAL_CLEAR_RANDOM);
         }
 
         // Covers every entity, mooshrooms included, not just players - fire can happen to

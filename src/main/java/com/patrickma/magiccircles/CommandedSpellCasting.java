@@ -78,7 +78,7 @@ public final class CommandedSpellCasting
         com.patrickma.magiccircles.client.CommandedHeartstoneWisps.start(player, spell);
     }
 
-    public static void cast(ServerLevel level, Player player, HeartSpell spell)
+    public static void cast(ServerLevel level, LivingEntity player, HeartSpell spell)
     {
         if (spell == HeartSpell.MANA_FONT)
         {
@@ -88,6 +88,15 @@ public final class CommandedSpellCasting
         Vec3 center = player.position();
         RandomSource random = level.random;
 
+        if (spell == HeartSpell.SHIELD && player instanceof Player)
+        {
+            // A player's Shield is the Faye's own ward, closed tight about them - see FairyWard. It
+            // lasts as long as any lasting spell, and using the stone again drops it (see #endCast).
+            FairyWard.raise(level, player);
+            activeCasts.add(new ActiveCast(level, player.getUUID(), spell, player.position(), DURATION_TICKS, false));
+            return;
+        }
+
         if (spell.isProlonged())
         {
             // Shield is indefinite now - it runs until the stone's own mana actually runs out
@@ -95,7 +104,9 @@ public final class CommandedSpellCasting
             // rather than a fixed timer every other prolonged spell still uses. ticksRemaining
             // is irrelevant for it (see #onServerTick's own indefinite check) but still needs a
             // positive value so it doesn't look already-expired before the first tick runs.
-            boolean indefinite = spell == HeartSpell.SHIELD;
+            // Only a player's - a fairy (entity/FairyEntity) flies off, and a shield it left
+            // behind would otherwise stand where it cast it until something happened to hit it.
+            boolean indefinite = spell == HeartSpell.SHIELD && player instanceof Player;
             ActiveCast active = new ActiveCast(level, player.getUUID(), spell, center, DURATION_TICKS, indefinite);
             if (spell == HeartSpell.SHIELD)
             {
@@ -106,6 +117,23 @@ public final class CommandedSpellCasting
         }
 
         applyOneShot(level, player, spell, center, random);
+    }
+
+    /** Ends this caster's own still-running cast of {@code spell}, if there is one - a second right-click on the stone. */
+    public static boolean cancelActive(UUID casterId, HeartSpell spell)
+    {
+        Iterator<ActiveCast> iterator = activeCasts.iterator();
+        while (iterator.hasNext())
+        {
+            ActiveCast active = iterator.next();
+            if (active.spell == spell && active.playerId.equals(casterId))
+            {
+                endCast(active);
+                iterator.remove();
+                return true;
+            }
+        }
+        return false;
     }
 
     private static List<ShieldOrbEntity> spawnShieldOrbs(ServerLevel level, Vec3 center, UUID ownerPlayerUuid)
@@ -144,7 +172,7 @@ public final class CommandedSpellCasting
         {
             return;
         }
-        Player player = level.getServer().getPlayerList().getPlayer(playerUuid);
+        LivingEntity player = level.getEntity(playerUuid) instanceof LivingEntity caster ? caster : null;
         ItemStack stone = player == null ? ItemStack.EMPTY : findCommandedShieldStone(player);
         if (player == null || stone.isEmpty())
         {
@@ -164,19 +192,25 @@ public final class CommandedSpellCasting
         }
     }
 
-    private static ItemStack findCommandedShieldStone(Player player)
+    private static ItemStack findCommandedShieldStone(LivingEntity caster)
     {
-        for (ItemStack stack : player.getInventory().items)
+        if (caster instanceof Player player)
         {
-            if (stack.getItem() instanceof HeartstoneItem && HeartstoneItem.getCommandedSpell(stack) == HeartSpell.SHIELD)
+            for (ItemStack stack : player.getInventory().items)
             {
-                return stack;
+                if (stack.getItem() instanceof HeartstoneItem && HeartstoneItem.getCommandedSpell(stack) == HeartSpell.SHIELD)
+                {
+                    return stack;
+                }
             }
         }
-        ItemStack offhand = player.getOffhandItem();
-        if (offhand.getItem() instanceof HeartstoneItem && HeartstoneItem.getCommandedSpell(offhand) == HeartSpell.SHIELD)
+        // Anyone else carries theirs in hand - a fairy, say.
+        for (ItemStack held : List.of(caster.getMainHandItem(), caster.getOffhandItem()))
         {
-            return offhand;
+            if (held.getItem() instanceof HeartstoneItem && HeartstoneItem.getCommandedSpell(held) == HeartSpell.SHIELD)
+            {
+                return held;
+            }
         }
         return ItemStack.EMPTY;
     }
@@ -195,7 +229,7 @@ public final class CommandedSpellCasting
         }
     }
 
-    private static void applyOneShot(ServerLevel level, Player player, HeartSpell spell, Vec3 center, RandomSource random)
+    private static void applyOneShot(ServerLevel level, LivingEntity player, HeartSpell spell, Vec3 center, RandomSource random)
     {
         switch (spell)
         {
@@ -269,7 +303,7 @@ public final class CommandedSpellCasting
         }
     }
 
-    private static void castBloomOfLife(ServerLevel level, Player player, Vec3 center, RandomSource random)
+    private static void castBloomOfLife(ServerLevel level, LivingEntity player, Vec3 center, RandomSource random)
     {
         net.minecraft.core.BlockPos origin = new net.minecraft.core.BlockPos((int) center.x, (int) center.y, (int) center.z);
         for (net.minecraft.core.BlockPos pos : net.minecraft.core.BlockPos.betweenClosed(origin.offset(-6, -3, -6), origin.offset(6, 3, 6)))
@@ -323,7 +357,7 @@ public final class CommandedSpellCasting
 
     private static void tickCast(ActiveCast active)
     {
-        Player player = active.level.getServer().getPlayerList().getPlayer(active.playerId);
+        Entity player = active.level.getEntity(active.playerId);
         switch (active.spell)
         {
             case STORM ->
@@ -438,6 +472,10 @@ public final class CommandedSpellCasting
             {
                 orb.discard();
             }
+        }
+        else if (active.spell == HeartSpell.SHIELD)
+        {
+            FairyWard.lower(active.playerId);
         }
     }
 

@@ -37,6 +37,12 @@ import java.util.UUID;
 public class GhostPhantomEntity extends Phantom
 {
     private UUID victimUuid;
+    /**
+     * Whether this one hunts from behind the veil. True for the phantoms that stalk a rite caster
+     * across it; false for the witness a curse summons, which is fully present in the living world
+     * so that everyone can see what follows a curser around.
+     */
+    private boolean veiled = true;
 
     public GhostPhantomEntity(EntityType<? extends Phantom> type, Level level)
     {
@@ -83,6 +89,16 @@ public class GhostPhantomEntity extends Phantom
         return victimUuid;
     }
 
+    public void setVeiled(boolean veiled)
+    {
+        this.veiled = veiled;
+    }
+
+    public boolean isVeiled()
+    {
+        return veiled;
+    }
+
     /**
      * "They should not be able to leave the realm of the dead... it should no longer target me once
      * I leave." A phantom exists solely to hunt one person while that person is across the veil, so
@@ -103,7 +119,16 @@ public class GhostPhantomEntity extends Phantom
             return;
         }
         Entity victim = ((ServerLevel) this.level()).getEntity(victimUuid);
-        if (victim == null || !Veil.isBehindVeil(victim))
+        if (victim == null)
+        {
+            this.setTarget(null);
+            this.discard();
+            return;
+        }
+        // Only the veiled ones are tied to their victim still being across it. A curse's witness
+        // hunts someone who is very much among the living, and checking the veil for that one
+        // would dismiss it the instant it spawned.
+        if (veiled && !Veil.isBehindVeil(victim))
         {
             this.setTarget(null);
             this.discard();
@@ -132,6 +157,7 @@ public class GhostPhantomEntity extends Phantom
     public void addAdditionalSaveData(CompoundTag tag)
     {
         super.addAdditionalSaveData(tag);
+        tag.putBoolean("Veiled", veiled);
         if (victimUuid != null)
         {
             tag.putUUID("VictimUuid", victimUuid);
@@ -142,6 +168,7 @@ public class GhostPhantomEntity extends Phantom
     public void readAdditionalSaveData(CompoundTag tag)
     {
         super.readAdditionalSaveData(tag);
+        veiled = !tag.contains("Veiled") || tag.getBoolean("Veiled");
         if (tag.hasUUID("VictimUuid"))
         {
             victimUuid = tag.getUUID("VictimUuid");

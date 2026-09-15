@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "magiccircles:block/stripped_living_wood_log_top",
+    "side": "magiccircles:block/stripped_living_wood_log"
+  }
+}

@@ -93,4 +93,37 @@ public class PlayerCorpseRenderer extends LivingEntityRenderer<PlayerCorpseEntit
     {
         return entity.isCustomNameVisible();
     }
+
+    /**
+     * Puts the name over the body's head rather than its feet.
+     *
+     * <p>Vanilla hangs a nameplate at {@code bbHeight + 0.5}, which assumes the thing it is naming
+     * is standing up. A corpse is lying down, so that lands on the ground at the foot end. The body
+     * is tipped backwards out of its facing direction (see {@link #setupRotations}), which puts the
+     * head roughly {@link #HEAD_REACH} blocks behind where the entity nominally stands - so the
+     * plate is walked back along that axis and lifted clear of the ground.
+     *
+     * <p>This runs outside {@code setupRotations}, in the ordinary world-aligned frame, so the
+     * offset is computed straight from the body's yaw rather than inherited from that rotation.
+     */
+    @Override
+    protected void renderNameTag(PlayerCorpseEntity entity, net.minecraft.network.chat.Component displayName,
+                                 PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource buffers,
+                                 int packedLight)
+    {
+        // The very angle setupRotations turned the body by, so the plate always follows the head.
+        float yaw = entity.yBodyRot * ((float) Math.PI / 180.0f);
+        double dx = Math.sin(yaw) * HEAD_REACH;
+        double dz = -Math.cos(yaw) * HEAD_REACH;
+
+        poseStack.pushPose();
+        poseStack.translate(dx, NAME_LIFT - entity.getNameTagOffsetY(), dz);
+        super.renderNameTag(entity, displayName, poseStack, buffers, packedLight);
+        poseStack.popPose();
+    }
+
+    /** How far behind the body's own position its head ends up once it is lying down. */
+    private static final double HEAD_REACH = 1.1;
+    /** Height the plate floats at above the ground, replacing vanilla's standing-height assumption. */
+    private static final double NAME_LIFT = 0.9;
 }

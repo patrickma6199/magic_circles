@@ -8,6 +8,7 @@ import com.patrickma.magiccircles.block.GlitterWeedPlantBlock;
 import com.patrickma.magiccircles.block.HeartCoreBlock;
 import com.patrickma.magiccircles.block.HeartCoreTopBlock;
 import com.patrickma.magiccircles.block.MagicCircleBlock;
+import com.patrickma.magiccircles.block.StrippableLogBlock;
 import com.patrickma.magiccircles.block.WellspringWaterBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -56,6 +57,13 @@ public class ModBlocks
                     .noOcclusion()
                     .lightLevel(state -> 5)));
 
+    /** The placed form of {@link ModItems#ART_OF_BLOOD} - see {@link com.patrickma.magiccircles.block.ArtOfBloodBlock}. Gives off no light of its own; it isn't that kind of book. */
+    public static final RegistryObject<Block> ART_OF_BLOOD_BLOCK = BLOCKS.register("art_of_blood_block",
+            () -> new com.patrickma.magiccircles.block.ArtOfBloodBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .strength(1.0f)
+                    .noOcclusion()));
+
     /** As common as coal, same Y range - see the worldgen files under data/magiccircles/worldgen and data/magiccircles/forge. */
     public static final RegistryObject<Block> FAIRY_FOSSIL_ORE = BLOCKS.register("fairy_fossil_ore",
             () -> new Block(BlockBehaviour.Properties.of()
@@ -96,8 +104,45 @@ public class ModBlocks
      * RotatedPillarBlock}, same as any vanilla log.
      */
     public static final RegistryObject<Block> LIVING_WOOD_LOG = BLOCKS.register("living_wood_log",
-            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_LOG)
+            () -> new StrippableLogBlock(ModBlocks.STRIPPED_LIVING_WOOD_LOG, BlockBehaviour.Properties.copy(Blocks.OAK_LOG)
                     .mapColor(MapColor.COLOR_LIGHT_GREEN)));
+
+    // The rest of the Living Wood family - everything oak makes, made from this instead. Each copies
+    // its oak counterpart's own properties (and sounds, and how doors and gates open), so it handles
+    // exactly as oak does; vanilla's tags (data/minecraft/tags) are what put the planks into every
+    // recipe that takes "any planks" - crafting table, sticks, chests, tools - and the logs into
+    // charcoal. Everything's models and recipes are vanilla oak's own, renamed.
+    public static final RegistryObject<Block> STRIPPED_LIVING_WOOD_LOG = BLOCKS.register("stripped_living_wood_log",
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.STRIPPED_OAK_LOG).mapColor(MapColor.COLOR_LIGHT_GREEN)));
+    public static final RegistryObject<Block> LIVING_WOOD = BLOCKS.register("living_wood",
+            () -> new StrippableLogBlock(ModBlocks.STRIPPED_LIVING_WOOD, BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).mapColor(MapColor.COLOR_LIGHT_GREEN)));
+    public static final RegistryObject<Block> STRIPPED_LIVING_WOOD = BLOCKS.register("stripped_living_wood",
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.STRIPPED_OAK_WOOD).mapColor(MapColor.COLOR_LIGHT_GREEN)));
+    public static final RegistryObject<Block> LIVING_WOOD_PLANKS = BLOCKS.register("living_wood_planks",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS).mapColor(MapColor.COLOR_LIGHT_GREEN)));
+    public static final RegistryObject<Block> LIVING_WOOD_STAIRS = BLOCKS.register("living_wood_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(() -> ModBlocks.LIVING_WOOD_PLANKS.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(Blocks.OAK_STAIRS).mapColor(MapColor.COLOR_LIGHT_GREEN)));
+    public static final RegistryObject<Block> LIVING_WOOD_SLAB = BLOCKS.register("living_wood_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.copy(Blocks.OAK_SLAB).mapColor(MapColor.COLOR_LIGHT_GREEN)));
+    public static final RegistryObject<Block> LIVING_WOOD_FENCE = BLOCKS.register("living_wood_fence",
+            () -> new net.minecraft.world.level.block.FenceBlock(BlockBehaviour.Properties.copy(Blocks.OAK_FENCE).mapColor(MapColor.COLOR_LIGHT_GREEN)));
+    public static final RegistryObject<Block> LIVING_WOOD_FENCE_GATE = BLOCKS.register("living_wood_fence_gate",
+            () -> new net.minecraft.world.level.block.FenceGateBlock(BlockBehaviour.Properties.copy(Blocks.OAK_FENCE_GATE).mapColor(MapColor.COLOR_LIGHT_GREEN),
+                    net.minecraft.world.level.block.state.properties.WoodType.OAK));
+    public static final RegistryObject<Block> LIVING_WOOD_DOOR = BLOCKS.register("living_wood_door",
+            () -> new net.minecraft.world.level.block.DoorBlock(BlockBehaviour.Properties.copy(Blocks.OAK_DOOR).mapColor(MapColor.COLOR_LIGHT_GREEN),
+                    net.minecraft.world.level.block.state.properties.BlockSetType.OAK));
+    public static final RegistryObject<Block> LIVING_WOOD_TRAPDOOR = BLOCKS.register("living_wood_trapdoor",
+            () -> new net.minecraft.world.level.block.TrapDoorBlock(BlockBehaviour.Properties.copy(Blocks.OAK_TRAPDOOR).mapColor(MapColor.COLOR_LIGHT_GREEN),
+                    net.minecraft.world.level.block.state.properties.BlockSetType.OAK));
+    public static final RegistryObject<Block> LIVING_WOOD_BUTTON = BLOCKS.register("living_wood_button",
+            () -> new net.minecraft.world.level.block.ButtonBlock(BlockBehaviour.Properties.copy(Blocks.OAK_BUTTON).mapColor(MapColor.COLOR_LIGHT_GREEN),
+                    net.minecraft.world.level.block.state.properties.BlockSetType.OAK, 30, true));
+    public static final RegistryObject<Block> LIVING_WOOD_PRESSURE_PLATE = BLOCKS.register("living_wood_pressure_plate",
+            () -> new net.minecraft.world.level.block.PressurePlateBlock(
+                    net.minecraft.world.level.block.PressurePlateBlock.Sensitivity.EVERYTHING, BlockBehaviour.Properties.copy(Blocks.OAK_PRESSURE_PLATE).mapColor(MapColor.COLOR_LIGHT_GREEN),
+                    net.minecraft.world.level.block.state.properties.BlockSetType.OAK));
 
     /** This tree's leaves - a soft glow ({@code lightLevel}) is the one deliberate difference from a plain {@link Blocks#OAK_LEAVES} copy, so a Living Wood canopy actually reads as magical after dark. */
     public static final RegistryObject<Block> LIVING_WOOD_LEAVES = BLOCKS.register("living_wood_leaves",

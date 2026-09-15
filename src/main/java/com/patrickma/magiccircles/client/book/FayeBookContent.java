@@ -16,8 +16,10 @@ import java.util.List;
  * BookOfTheFayeScreen} flows these onto however many pages they need, so nothing here is written
  * against a page size and adding a paragraph never shifts a diagram onto the wrong page.
  *
- * <p>The prose is the Faye's own telling; the figures beside it are the practical half - real item
- * icons, real recipes, and the ring diagrams drawn as the footprint you would actually chalk.
+ * <p>It is the Faye's own book, written by fairies for fairies: their songs and their history, and
+ * their craft taught the way one of them would teach another - with the wingless (whoever is
+ * actually reading it) spoken of from the outside. The figures beside the prose are the practical
+ * half: real item icons, real recipes, and the ring diagrams drawn as the footprint you would chalk.
  */
 public final class FayeBookContent
 {
@@ -93,10 +95,14 @@ public final class FayeBookContent
     {
         List<Chapter> chapters = new ArrayList<>();
         chapters.add(beforeTheRecalling());
-        chapters.add(whatYourHandsMake());
-        chapters.add(theWellspringSpells());
-        chapters.add(commandingTheHeartstone());
-        chapters.add(yllumere());
+        chapters.add(theThiefAndTheSeed());
+        chapters.add(theRecalling());
+        chapters.add(whatOurHandsMake());
+        chapters.add(theSongsOfTheRings());
+        chapters.add(songsInStone());
+        chapters.add(theRoadsToYllumere());
+        chapters.add(ourPeople());
+        chapters.add(theQueenAndHerCourt());
         chapters.add(theBlessing());
         chapters.add(theAncientHeartstone());
         chapters.add(theDreamElk());
@@ -108,81 +114,102 @@ public final class FayeBookContent
     private static Chapter beforeTheRecalling()
     {
         return new Chapter("Before the Recalling", List.of(
-                Block.text("Long before these hills were counted, the Faye walked beneath open sky, drawing their magic from the Wellspring - a river of silver water unlike any other."),
-                Block.text("The Faye believed the Wellspring was the last remnant of the Font of Making: the very tool the Worldsmiths once used to shape all worlds from the formless dark."),
-                Block.text("Other creatures drank of that same silver water and could live nowhere else - small drifting lights the Faye called Wellwisps, and pale naiads who never left its banks."),
-                Block.text("What the Faye did to earn the wrath of the Worldsmiths, no scroll now records. Some songs speak of a stolen secret. Others, of a broken oath. None agree."),
-                Block.text("Whatever the offense, judgment came. Queen Zuzo felt it first: a silence where the Wellspring's song should be, and a certainty the overworld itself would soon be unmade."),
-                Block.text("She would not wait to learn if she was right. Zuzo called her people to carry what water they could into a shard of unmade space, hastily woven before the end."),
-                Block.text("They saved only a trickle of what once flowed free. It was not enough for a kingdom. It was enough, Zuzo swore, for her people to survive whatever came next."),
-                Block.text("Then the Recalling came. The Worldsmiths did not shatter the overworld as the Faye had feared. They simply reached in and drew every drop of Wellspring water back out."),
-                Block.text("The world above was left whole, untouched, ignorant of what it had lost. Only the Faye, and the creatures bound to the Wellspring's magic, understood what was gone."),
-                Block.text("The Worldsmiths judged exile in that one small saved shard punishment enough, and left the Faye to it. Mortals later found its door and named it the Fairy Realm."),
-                Block.text("The Faye have another name for their refuge: Yllumere, the Sheltered Water. There, still, the Wellspring runs - thin, precious, and utterly alone in all the worlds.")
+                Block.text("Sit close, little one, and I will sing it to you the way it was sung to me, and to the one who sang it to me, back and back to the first of us who ever had wings."),
+                Block.text("Once the Faye lived beneath open sky, in the world the wingless call the overworld, and all our magic rose out of the Wellspring - a river of silver water that ran through that world like a vein of song."),
+                Block.text("The Wellspring was the last of the Font of Making, spilled when the Worldsmiths - the outer gods, who stand beyond every sky - shaped the worlds out of the formless dark. Where it ran, things grew that could grow nowhere else: the Wellwisps, the pale naiads of its banks, and us."),
+                Block.text("We were five peoples then, not one. Each bloodline carried one colour of the Wellspring's song. Zuzo's line sang storms, in blue. Korrin's wardens sang walls, in purple. The Verdant Mother's line sang things into flower, in gold. Sylvaine's menders sang wounds closed, in red. And the Gleaner's quiet folk sang fortune out of whatever others left behind, in green."),
+                Block.text("Those are the colours of our runes to this day. When you chalk a ring, you are chalking the old bloodlines, one rune at a time.")
         ));
     }
 
-    private static Chapter whatYourHandsMake()
+    private static Chapter theThiefAndTheSeed()
     {
-        return new Chapter("What Your Hands Must Make", List.of(
-                Block.text("Grind Redstone together with Glowstone Dust and you have Arcane Dust, two at a time. Everything else begins there."),
+        return new Chapter("The Thief and the Seed", List.of(
+                Block.text("Zuzo loved someone she should not have. He was a demigod - half of the outer gods' own making - and the songs do not keep his name. We call him the Thief, and we sing him kindly, because he earned it."),
+                Block.text("For her he climbed past the last sky and stole from the Worldsmiths the one thing they never meant to share: a seed of the Font of Making itself. The very power that made the world above, closed up small enough to carry in two hands."),
+                Block.text("He brought it to her, and he did not get away. The outer gods found him and pulled his soul apart, thread by thread, until there was nothing of him left to find. Some say the black wisp that circles every queen is the last of him. Some say it is only her grief. Both may be true."),
+                Block.text("Zuzo did not waste what he died for. She called the five bloodlines together and asked each of them to give the seed its song - blue and purple, gold and red and green - and every line gave, and the seed drank it all."),
+                Block.text("What woke in her hands woke in her too. She rose from it the first queen of all the Faye, carrying every colour at once - the only one of us who ever has, save the queens who have come after her."),
+                Block.text("The giving cost the rest of us. Our lines were thinned by it and have never filled again. That is why each of us carries a single song in a single stone, and why all of us look to the queen: for her strength, for her shelter, and for the lightning that answers anyone who harms us in her sight.")
+        ));
+    }
+
+    private static Chapter theRecalling()
+    {
+        return new Chapter("The Recalling, and Yllumere", List.of(
+                Block.text("A theft like that is not forgiven. Zuzo felt the judgement coming before anyone else - a silence where the Wellspring's song should have been - and knew the outer gods were coming for what was taken."),
+                Block.text("She did not wait to learn what they meant to do. Out past the edge of everything she wove a shard of unmade space, in haste, and called her people to carry what silver water they could into it."),
+                Block.text("Then the Recalling came. The Worldsmiths did not break the world above, as we feared they would. They only reached into it and drew every drop of the Wellspring back out. The overworld was left whole, and never knew what it had lost."),
+                Block.text("But the seed they did not find. Zuzo carried it through with her, and in the middle of the saved water she planted it."),
+                Block.text("The shard she shaped in her own image: its meadows and rivers, its sky full of light, and the Living Wood of its groves, pale and sweet, which is her wood and grows nowhere else. That is why all of Yllumere feels like her. It is her."),
+                Block.text("The tree she did not shape. It grew out of the seed by itself, and it is the seed's, not hers: its heart is the same oak and dark oak and spruce the world above is made of, because it was made by the same power that made the world above. That is why we call it the World Tree, and why its wood is like no other wood in Yllumere."),
+                Block.text("It is the tree that holds the shard together. Everything here - the islands, the water, the light, us - lives on the tree, and the tree lives on the Wellspring pooled at its foot. The wingless found our door long after and called our home the Fairy Realm. We call it Yllumere: the Sheltered Water."),
+                Block.text("Look at the bark around the great arch of the court and you will see her wood creeping into the seed's, vein by vein - Zuzo's making and the Thief's gift, growing into one another a little more with every age. The eldest say that is how it was always meant to be.")
+        ));
+    }
+
+    private static Chapter whatOurHandsMake()
+    {
+        return new Chapter("What Our Hands Make", List.of(
+                Block.text("Every working begins with Arcane Dust. Grind the red dust of the world above with the sun-dust of its deep places - redstone and glowstone - and you will have two pinches of it."),
                 Block.figure(FayeFigure.shapeless(row(Items.REDSTONE, Items.GLOWSTONE_DUST), stack(ModItems.ARCANE_DUST.get()), FRAME, FILL)),
-                Block.text("Arcane Dust and Bone Meal make plain Chalk. Each piece draws two hundred runes before it is spent."),
-                Block.figure(FayeFigure.shapeless(row(ModItems.ARCANE_DUST.get(), Items.BONE_MEAL), stack(ModItems.CHALK.get()), FRAME, FILL)),
-                Block.text("Swap the Bone Meal for a Gold Nugget and the chalk comes out Gold instead."),
+                Block.text("Arcane Dust with blue dye, or with lapis whole, makes Blue Chalk. A stick of it draws two hundred runes before it is worn away to nothing."),
+                Block.figure(FayeFigure.shapeless(row(ModItems.ARCANE_DUST.get(), Items.BLUE_DYE), stack(ModItems.CHALK.get()), FRAME, FILL)),
+                Block.text("Trade the blue for a nugget of gold and the chalk comes out Gold."),
                 Block.figure(FayeFigure.shapeless(row(ModItems.ARCANE_DUST.get(), Items.GOLD_NUGGET), stack(ModItems.GOLD_CHALK.get()), FRAME, FILL)),
-                Block.text("Chalk takes color after the fact as well. Thelia Dust turns it Green; coal or charcoal turns it Black. Tinting never restores a worn piece - what is spent stays spent."),
+                Block.text("A stick of Blue Chalk will take other colours after it is made. Rub it with Thelia Dust and it greens; rub it with coal or charcoal and it blackens. A tinted stick is only as long as it was - what is worn away stays worn."),
                 Block.figure(FayeFigure.shapeless(row(ModItems.CHALK.get(), ModItems.THELIA_DUST.get()), stack(ModItems.GREEN_CHALK.get()), FRAME, FILL)),
                 Block.figure(FayeFigure.shapeless(row(ModItems.CHALK.get(), Items.COAL), stack(ModItems.BLACK_CHALK.get()), FRAME, FILL)),
-                Block.text("Thelia Dust is what a Living Wood Log becomes in a furnace. The log comes from the World Tree; you will not find it under your own sky."),
-                Block.text("Red Chalk answers to no recipe at all. Only a Dream Elk will give it, and only if you feed it first."),
-                Block.text("Dig for Fairy Fossil Ore: a pink bone-ridden stone, as common as coal and lying at the same depths. A stone pick will break it; a wooden one will not."),
-                Block.text("Nineteen in twenty fossils give up nothing but a Bone. Roughly one in twenty yields a Fairy Horn, and one in a hundred a Heartstone already holding five hundred mana."),
+                Block.text("Thelia Dust is Living Wood fired in a furnace. Cut the logs from Zuzo's pale groves out across the islands - never from the World Tree, which is not ours to burn."),
+                Block.text("Red Chalk no hand makes. A Dream Elk gives it, and only once it has eaten; the chapter on the elk tells how."),
+                Block.text("Purple Chalk only we can make, and we do not say how. The wingless must buy it from us, and they do - for redstone."),
+                Block.text("Down in the world above, at the depths where coal lies, there is a pink stone full of bones: Fairy Fossil Ore. Those bones are ours - the ones who never reached the shard - and we do not grudge the wingless what they give. A stone pick will open it; a wooden one will not."),
+                Block.text("Nineteen stones in twenty give only a bone. About one in twenty-five gives a Fairy Horn, and one in a hundred a Heartstone still holding five hundred mana, as if its keeper had only just set it down."),
                 Block.figure(FayeFigure.items(row(ModItems.FAIRY_FOSSIL_ORE.get(), Items.BONE, ModItems.FAIRY_HORN.get(), ModItems.HEARTSTONE.get()), FRAME, FILL)),
-                Block.text("The Horn is the key to every circle. It does nothing in the hand alone - its whole purpose is to be touched to a finished ring."),
-                Block.text("An Athame - one Iron Ingot above one Stick - cuts nothing but the veil. Keep it away from black chalk unless you mean it."),
+                Block.text("The Horn is the key to every ring. It does nothing in the hand; touch it to a finished circle and the circle wakes."),
+                Block.text("An Athame - an iron ingot above a stick - cuts nothing but the veil and whoever stands beside it. Keep it far from black chalk, unless you mean what that means."),
                 Block.figure(FayeFigure.shaped(grid(Items.IRON_INGOT, null, null, Items.STICK, null, null, null, null, null),
                         stack(ModItems.ATHAME.get()), FRAME, FILL))
         ));
     }
 
-    private static Chapter theWellspringSpells()
+    private static Chapter theSongsOfTheRings()
     {
         List<Block> blocks = new ArrayList<>();
-        blocks.add(Block.text("Draw the ring in chalk, then touch a Fairy Horn to its heart. A ring is twelve runes around a single Heart Core, and each color - and each pairing of colors - answers differently."));
-        blocks.add(Block.text("Position never matters. Only how many runes of each color the ring holds."));
+        blocks.add(Block.text("A ring is twelve runes chalked around a single Heart Core. Touch it with a Fairy Horn and it sings the song of whichever bloodlines it holds - one colour alone, or two colours, six and six."));
+        blocks.add(Block.text("Where the runes sit never matters. Only how many of each colour the ring holds."));
 
-        addSpell(blocks, "Zuzo's Wrathful Downpour", solid(RuneColor.BLUE),
-                "Pure Blue, 100 mana. Zuzo's tempest rages thirty seconds; lightning finds foes beyond the circle.");
-        addSpell(blocks, "Korrin's Unbroken Ward", solid(RuneColor.PURPLE),
-                "Pure Purple. Unbreakable wards rise, and every hit they take costs the heart a point of mana. Purple wisps trace the true edge.");
-        addSpell(blocks, "The Verdant Mother's Blessing", solid(RuneColor.GOLD),
-                "Pure Gold, 30 mana. Wildflowers bloom across the grass around the circle.");
-        addSpell(blocks, "Sylvaine's Mercy", solid(RuneColor.RED),
-                "Pure Red, 60 mana. Every friendly creature nearby is restored to full health.");
-        addSpell(blocks, "The Gleaner's Fortune", solid(RuneColor.GREEN),
-                "Pure Green, 40 mana. Loose experience the Gleaner gathered scatters free.");
-        addSpell(blocks, "Zuzo and Sylvaine's Absolution", split(RuneColor.BLUE, RuneColor.RED),
-                "Half Blue, half Red, 50 mana. Washes poison and fire from every creature nearby.");
-        addSpell(blocks, "Korrin and Zuzo's Last Stand", split(RuneColor.BLUE, RuneColor.PURPLE),
-                "Half Blue, half Purple, 120 mana. Wards rise forty-five seconds, striking foes with lightning.");
-        addSpell(blocks, "Korrin and the Gleaner's Bargain", split(RuneColor.PURPLE, RuneColor.GREEN),
-                "Half Purple, half Green. Draws mana from a Wellspring within fifteen blocks - and nothing at all without one.");
-        addSpell(blocks, "Verdant Mother and Sylvaine's Bloom", split(RuneColor.GOLD, RuneColor.RED),
-                "Half Gold, half Red, 80 mana. Flowers bloom, wounds close, and vigor lingers after.");
-        addSpell(blocks, "Verdant Mother and Gleaner's Harvest", split(RuneColor.GOLD, RuneColor.GREEN),
-                "Half Gold, half Green, 50 mana. Crops ripen fully; a little fortune gleaned too.");
-        addSpell(blocks, "Sylvaine and the Gleaner's Vigor", split(RuneColor.RED, RuneColor.GREEN),
-                "Half Red, half Green. Fifty mana a minute for as long as it holds; grants allies vigor.");
+        addSong(blocks, "Zuzo's Wrathful Downpour", solid(RuneColor.BLUE),
+                "All blue, a hundred mana. The first queen's own storm rages for half a minute, and its lightning finds whatever means harm outside the circle.");
+        addSong(blocks, "Korrin's Unbroken Ward", solid(RuneColor.PURPLE),
+                "All purple. Korrin's wardens raise walls nothing can break, and every blow the walls take costs the heart a mana. Purple wisps walk their true edge.");
+        addSong(blocks, "The Verdant Mother's Blessing", solid(RuneColor.GOLD),
+                "All gold, thirty mana. Wildflowers open across the grass all around the ring.");
+        addSong(blocks, "Sylvaine's Mercy", solid(RuneColor.RED),
+                "All red, sixty mana. Every friendly creature near is mended whole.");
+        addSong(blocks, "The Gleaner's Fortune", solid(RuneColor.GREEN),
+                "All green, forty mana. What the Gleaner gathered scatters free as loose experience.");
+        addSong(blocks, "Zuzo and Sylvaine's Absolution", split(RuneColor.BLUE, RuneColor.RED),
+                "Half blue, half red, fifty mana. A rain that washes poison and fire from every creature near.");
+        addSong(blocks, "Korrin and Zuzo's Last Stand", split(RuneColor.BLUE, RuneColor.PURPLE),
+                "Half blue, half purple, a hundred and twenty mana. Walls rise for three quarters of a minute, and lightning strikes whatever comes at them.");
+        addSong(blocks, "Korrin and the Gleaner's Bargain", split(RuneColor.PURPLE, RuneColor.GREEN),
+                "Half purple, half green, ten mana to wake it. For a minute the heart draws mana out of the air itself - fifty every few breaths, a thousand in all, enough to fill any heart from empty. No stone can carry this song.");
+        addSong(blocks, "Verdant Mother and Sylvaine's Bloom", split(RuneColor.GOLD, RuneColor.RED),
+                "Half gold, half red, eighty mana. Flowers open, wounds close, and a vigour lingers after.");
+        addSong(blocks, "Verdant Mother and Gleaner's Harvest", split(RuneColor.GOLD, RuneColor.GREEN),
+                "Half gold, half green, fifty mana. Every crop near ripens, and a little fortune is gleaned besides.");
+        addSong(blocks, "Sylvaine and the Gleaner's Vigor", split(RuneColor.RED, RuneColor.GREEN),
+                "Half red, half green. Fifty mana a minute for as long as it holds, and vigour for everyone who stands with you.");
 
-        blocks.add(Block.text("Zuzo's Crossing is not a ring of colors at all, but a pattern - redstone at the corners, Blue and Gold between. Five hundred mana."));
+        blocks.add(Block.text("Zuzo's Crossing is no ring of colours but a pattern: redstone at the corners, blue and gold between. Five hundred mana. It is the door she wove to bring us here, and it opens still."));
         blocks.add(Block.figure(FayeFigure.pattern(portalCells(), Component.literal("Zuzo's Crossing"))));
-        blocks.add(Block.text("It deepens the water around the heart. Submerge yourself and hold your breath, and you will wake on the other side."));
-        blocks.add(Block.text("Not every ring answers. Blue and Gold. Blue and Green. Gold and Purple. Purple and Red. Perhaps their spells are lost - or the Faye never found them at all."));
-        return new Chapter("The Wellspring Spells", blocks);
+        blocks.add(Block.text("It deepens the water around the heart. Swim down and touch the bottom of it, and you wake on the other side."));
+        blocks.add(Block.text("Some pairings do not sing at all. Blue with gold. Blue with green. Gold with purple. Purple with red. Perhaps those songs were lost in the giving, when the seed drank us thin. Perhaps no two lines ever learned them together."));
+        return new Chapter("The Songs of the Rings", blocks);
     }
 
-    private static void addSpell(List<Block> blocks, String name, List<RuneColor> ring, String description)
+    private static void addSong(List<Block> blocks, String name, List<RuneColor> ring, String description)
     {
         blocks.add(Block.figure(FayeFigure.circle(ring, Component.literal(name))));
         blocks.add(Block.text(description));
@@ -204,93 +231,127 @@ public final class FayeBookContent
         return Arrays.copyOf(cells, cells.length);
     }
 
-    private static Chapter commandingTheHeartstone()
+    private static Chapter songsInStone()
     {
-        return new Chapter("Commanding the Heartstone", List.of(
-                Block.text("Eat of a Mana Wyrm - a slithering, glowing thing that lives only in Wellspring water - and you are Blessed By the Wellspring: one minute raw, two minutes cooked."),
+        return new Chapter("Songs Carried in Stone", List.of(
+                Block.text("A song need not stay in its ring. Held in a Heartstone, it goes wherever you go - it is how each of us carries our one song. We are born knowing how. The wingless must first be Blessed, by eating of a Mana Wyrm: a minute raw, five cooked."),
                 Block.figure(FayeFigure.items(row(ModItems.RAW_MANA_WYRM.get(), ModItems.COOKED_MANA_WYRM.get(), ModItems.HEARTSTONE.get()), FRAME, FILL)),
-                Block.text("While the Blessing holds, stand empty-handed before a working Heart Core whose ring is complete and idle, and touch it. Its wisps will pour into the heart itself."),
-                Block.text("After a pause, the heart and its ring both vanish, and a Heartstone - commanded to whatever spell that ring once cast - appears straight in your hand."),
-                Block.text("A commanded Heartstone answers to a simple touch. Hold it, use it, and it casts its spell around you rather than around any circle - lasting twenty seconds, whatever the spell."),
-                Block.text("Three white wisps circle you the whole while a lasting spell holds. The spell's own colors fly from the stone itself."),
-                Block.text("Command Korrin's Ward this way and its purple wisps will not follow you - they trace the ward's true boundary, fixed where you stood the instant you cast it."),
-                Block.text("A commanded Heartstone cannot be commanded again while it still answers to its first spell. Only charging it with mana, and the Cleansing itself, may be done to a stone already spoken for."),
-                Block.text("Only the Cleansing unmakes a commission. Kneel at the Wellspring's edge, heartstone in hand, and touch the water. The old commission washes away and the stone is blank again.")
+                Block.text("Stand before a heart whose ring is whole and quiet, with nothing in your hands, and touch it. Its wisps pour back into the heart; then heart and ring are gone, and in your hand is a Heartstone that remembers that song."),
+                Block.text("Use the stone and it sings around you rather than around any ring. A lasting song holds for twenty seconds - and if you use the stone again while it holds, it falls silent early."),
+                Block.text("Three white wisps circle you while a lasting song holds. The song's own colours fly from the stone."),
+                Block.text("Korrin's walls, sung from a stone, close tight about whoever sings them, as ours do about us when we are struck: the wings open and lift them a length into the air, and there they hang in the ward's heart while it throws everything else out and turns every blow and bolt from outside, for twenty seconds. The walls cost nothing to raise: the stone pays for them only as they are struck, a mana for every point of harm they turn aside, and they fall if it runs dry."),
+                Block.text("A stone remembers one song only. You may pour mana into it and it keeps its song, but it will not learn another until it is Cleansed."),
+                Block.text("To Cleanse it, kneel at the Wellspring's edge with the stone in your hand and touch the water. The old song washes out of it and the stone is blank again.")
         ));
     }
 
-    private static Chapter yllumere()
+    private static Chapter theRoadsToYllumere()
     {
-        return new Chapter("Yllumere, and the Road to It", List.of(
-                Block.text("Zuzo's Crossing opens the way: the portal ring, cast like any other spell. Submerge yourself in the deepened water, hold your breath, and you will wake in the Fairy Realm."),
-                Block.text("Crossing back is the same drowning in reverse. Whoever opened a portal always returns to their own; anyone else who follows them through lands at some other open door."),
-                Block.text("There is a second road, and it runs one way only. Let an Ender Pearl fall into Wellspring Water and leave it there. The wisps will come for it, circling tighter for three long seconds."),
+        return new Chapter("The Roads to Yllumere", List.of(
+                Block.text("The wingless come to us by Zuzo's Crossing: sing the pattern, swim down through the deepened water until they touch its bottom, and wake in Yllumere. Going home is the same dive the other way. Whoever opened a door comes back through their own; whoever followed them lands at some other open one."),
+                Block.text("Even the Marked can open the Crossing. It is the one door the dark does not shut, and it must not - the Wellspring is the only thing that washes the Mark away."),
+                Block.text("There is a second road, and it runs one way. Let an Ender Pearl fall into Wellspring water and leave it there: the wisps will come for it and circle tighter for three long seconds, and leave behind a Lost Waystone."),
                 Block.figure(FayeFigure.items(row(Items.ENDER_PEARL, ModItems.LOST_WAYSTONE.get()), FRAME, FILL)),
-                Block.text("What they leave behind is a Lost Waystone. Hold it, use it, and you are pulled to Yllumere at once - but the stone is spent in the carrying, and it will not bring you home."),
-                Block.text("In Yllumere stands the World Tree, and at its foot a well of silver water: the Wellspring itself, the last of it in all the worlds. A stair is cut into the well's rim to climb down."),
-                Block.text("The water is thick with life. Mana Wyrms glide in the deep ocean beneath, Pixies drift about the branches, and Dream Elk wander the islands with antlers taller than they are."),
-                Block.text("Glitter Weed grows in the shallows. Wyrms like to hide in it, and they are hard to catch anywhere else.")
+                Block.text("Use a waystone anywhere and you are pulled here at once, and the stone is spent in the carrying. Use one here and it tears you back out - through your own door if it still stands open, and otherwise to wherever you last slept. The wise keep one for the day the pool goes dark behind them."),
+                Block.text("Or sing the Crossing from this side. Sung anywhere in Yllumere, it opens the way home, not another way in. And in the ruined chamber where the Crossing comes up, a heart waits on its pedestal, full, its ring chalked in blue and gold - all but the redstone at its corners. Whoever is left here when the pool goes dark need only lay the redstone and wake it."),
+                Block.text("In the middle of Yllumere stands the World Tree, and at its foot the Wellspring pools in a well with a stair cut down into it. It is the last of the silver water in all the worlds."),
+                Block.text("From the well it runs out across the islands in rivers, and the Wellwisps drift thickest over them."),
+                Block.text("Mana Wyrms glide in the deep sea under the island, close beneath the Ancient Heartstone - thick as minnows, and however many are taken, the deep is never empty for long - and nowhere else, until one of them is killed down there. Then the rest scatter, and from that day a few are born in the rivers and pools out across the islands as well. Only a few: out there they are too far from the prime heart to thrive."),
+                Block.text("Nothing drowns in the Wellspring. A creature that goes under it and cannot breathe it is never hurt - the water simply takes it, there and then, and a wyrm swims away where it was. The eldest say that is where every wyrm first came from."),
+                Block.text("Glitter Weed grows up tall from the floor of the deep sea, and the wyrms love to hide in it."),
+                Block.text("Pixies drift about the branches, and Dream Elk walk the islands with antlers taller than they are.")
+        ));
+    }
+
+    private static Chapter ourPeople()
+    {
+        return new Chapter("Our People", List.of(
+                Block.text("We live in the World Tree, fewer than the songs remember. You know our shape: like the wingless, but never without our wings, each of us with a Heartstone in hand that remembers one song - walls and storms for the dark things, mending for the hurt, washing for the poisoned and the burning, flowers when we are at ease, and a little fortune for anyone kind enough to come near."),
+                Block.text("We spend our days on the wing among the branches, and now and then fly a whole lap of the tree for the joy of it. But every half minute or so one of us comes down to sit on a branch a while. Tell the wingless: that is when to speak with us."),
+                Block.text("We trade with them, and only for redstone. Yllumere has none, and every door we open to another world drinks it."),
+                Block.text("Each of us has exactly one thing to sell, and no more, so whoever wants something must ask around. Purple Chalk is common among us, and cooked wyrm a little less so. Only a few of us part with Arcane Dust, and a living wyrm, a full Heartstone, or this very book are rare and dear. The Art of Blood no fairy sells - only the queen, and for a fortune."),
+                Block.figure(FayeFigure.items(row(Items.REDSTONE, ModItems.PURPLE_CHALK.get(), ModItems.COOKED_MANA_WYRM.get(), ModItems.HEARTSTONE.get()), FRAME, FILL)),
+                Block.text("Strike one of us and we close ourselves in a ward for twenty seconds that throws everything else out, and loose ten purple wisps that hunt the striker down like arrows - walls stop them, and so do their own wards - and then we fly. We do not trade with anyone who has struck us."),
+                Block.text("When one of us falls, the soul does not linger where the body lies, as the wingless do. It goes to the court and waits in line along the north wall for the queen. She never lets more than six wait: when a seventh comes, she breathes life back into whichever of them has waited longest."),
+                Block.text("The pixies are our small companions, as dogs are to the wingless. They are harmless and easily startled, and they flee rather than fight. They love the queen, and two or three drift along beside her wherever she goes. Taken far from the Wellspring's mana, they sicken and die.")
+        ));
+    }
+
+    private static Chapter theQueenAndHerCourt()
+    {
+        return new Chapter("The Queen and Her Court", List.of(
+                Block.text("There is always one queen, and never two. When she falls, a fairy woman steps up to the crown - the seed's song finds her - and she takes a name with it. Zuzo, Queen of the Faye, was the first; every queen since has carried her title."),
+                Block.text("Every colour of wisp circles her, each on its own path, and the dark rite's black among them. She alone of us holds all the lines at once, and she alone has found a balance between the Wellspring and the dark."),
+                Block.text("Raise a hand against her, or against any of us in her sight, and the sky darkens to rain and answers with lightning until you are dead. She wards herself as we do, but she does not flee. She stays, and hunts you with her own wisps."),
+                Block.text("Her court is carved into the heartwood of the tree, its great arch opening onto the eastern sky. She holds court one whole day and roams the next, turn and turn about, and on her court days she sits her throne from dawn to dawn."),
+                Block.text("While she sits, her people come to her, a few at a time. Three stand on the floor beside the runner. The rest fly up into the heart of the tree above her, to ledges cut into the wood beneath the crown of shroomlight, and listen from there."),
+                Block.text("She has walked both sides of the veil. She sees the dead and speaks with them, and now and then she calls a lost soul to her from wherever it wanders, to offer it a bargain: its body back, and a debt to her that is not yet called in."),
+                Block.text("A fallen queen never waits behind the veil as the rest of us do. She has passed through it once already, and she goes straight home to the Wellspring - and all of Yllumere weeps rain for her.")
         ));
     }
 
     private static Chapter theBlessing()
     {
         return new Chapter("The Blessing of the Wellspring", List.of(
-                Block.text("Eat a Mana Wyrm and the Wellspring marks you kindly: one minute raw, two minutes cooked. While it holds, you are something closer to Faye than not."),
-                Block.text("Blessed, you may fly. Double-tap your jump in open air and the fairy wings open; double-tap again and they fold and you fall. No fall will hurt you while the Blessing lasts."),
-                Block.text("Blessed, the Wellspring is no longer drowning water. You breathe it freely and see through it perfectly, as clear below the surface as above it."),
-                Block.text("And Blessed, swimming in that same water slowly renews the Blessing - but only if you still carry it. Let it lapse entirely and the water will not give it back. Eat another Wyrm."),
-                Block.text("The Blessing is also what lets you take a ring's spell into a Heartstone, and what lets you command one afterwards.")
+                Block.text("A wingless one who eats of a Mana Wyrm is marked kindly by the Wellspring for a while - a minute raw, five cooked - and while it holds, they are closer to us than to their own kind. A wyrm can always be eaten, however full the belly, and each one adds to what is left, as far as two moons."),
+                Block.text("Wisps of the Wellspring's five colours circle the Blessed, each on its own tilted path, the way they circle the queen - all but the dark one, which is hers, and the Marked's. It is only a little of what she carries. It is enough."),
+                Block.text("The Blessed have wings. Leap twice, quickly, or simply fall five lengths, and ours open on their backs. Leap again in flight to fold them, or come down on anything solid."),
+                Block.text("They go wherever they look - up as easily as down, with nothing pulling them earthward. Leaning forward, they go faster. No fall and no wall will hurt them while the Blessing lasts."),
+                Block.text("Leaning back, they slow to a stop and hang in the air on beating wings, the way we hover, for as long as they please."),
+                Block.text("The Blessed breathe the Wellspring as we do, and see through it as clearly as through air."),
+                Block.text("And while they swim in it, the Wellspring tops their Blessing back up - as far as two moons, two whole days and nights, and no further. But only while they still carry it: let it lapse, and the water will not give it back. They must eat again."),
+                Block.text("The Blessing is also what lets them take a song into a Heartstone, and sing from it after.")
         ));
     }
 
     private static Chapter theAncientHeartstone()
     {
         return new Chapter("The Ancient Heartstone", List.of(
-                Block.text("Above the Wellspring itself hangs a heart no ring ever summoned and no Faye ever commanded - gold where every other heart glows blue-white, and utterly unbreakable."),
-                Block.text("The old songs call it the Ancient Heartstone, and say it is this heart, not any ward the Faye could raise, that holds Yllumere's true boundary against what waits beyond it."),
-                Block.text("Whatever hunts in the space between worlds, the songs say, cannot cross while the Ancient Heartstone still hangs there gold and burning. No Faye now living remembers a time it did not."),
-                Block.text("A faint ring of purple ever circles it, close and dormant - the same tell any idle heart shows, and proof enough that it has never once needed to be cast to keep working.")
+                Block.text("Above the Wellspring hangs a heart no ring summoned and no fairy ever commanded - gold, where every other heart burns blue-white, and nothing in any world can break it."),
+                Block.text("We call it the Ancient Heartstone. The eldest say it hung there before the first branch; that Zuzo set it there to hold the edge of the shard; and that whatever hunts in the space between worlds cannot cross while it still burns."),
+                Block.text("Wisps of every colour circle it, two of each, every one on its own tilted path, the way they circle the queen. It is the prime heart, the first of them all, and every other heart and every wyrm in the deep draws on it - which is why the wyrms thin out the farther they stray from it.")
         ));
     }
 
     private static Chapter theDreamElk()
     {
         return new Chapter("The Dream Elk", List.of(
-                Block.text("They wander Yllumere on long legs, antlers branching higher than their own shoulders, and flowers open in the grass wherever they walk."),
-                Block.text("An Elk may be tamed as a horse is tamed - mount it and be thrown, and mount it again, until it stops throwing you. Saddle it after that and it will carry you."),
-                Block.text("Offer one grass seeds, or any flower, and it will take the gift. Press plain Chalk to it afterwards and the chalk comes away Red, worn exactly as much as it was before."),
-                Block.figure(FayeFigure.items(row(Items.WHEAT_SEEDS, ModItems.CHALK.get(), ModItems.RED_CHALK.get()), FRAME, FILL)),
-                Block.text("One gift buys one piece. Feed it again for the next."),
-                Block.text("They are beasts as well as wonders, and those who hunt them come away with meat and hide. Whether that is worth the flowers they leave behind is a question the Faye never settled.")
+                Block.text("They walk the islands on long legs, antlers branching higher than their shoulders, and flowers open in the grass wherever they go. Now and then one simply leaps - four lengths into the air and eight across - for no reason any of us has found but gladness."),
+                Block.text("The wingless tame them the way they tame horses: mount, be thrown, mount again, until the elk stops throwing them. Saddled, it will carry them."),
+                Block.text("Ridden, it leaps just as it does when it is free. Let it gather the leap long enough and it clears four lengths upward - and eight forward, if its rider presses on."),
+                Block.text("Offer one a pinch of Arcane Dust and it will eat it, grumble about it for a few moments, and pass a fresh stick of Red Chalk out behind it. One pinch, one stick; feed it again for the next."),
+                Block.figure(FayeFigure.items(row(ModItems.ARCANE_DUST.get(), ModItems.RED_CHALK.get()), FRAME, FILL)),
+                Block.text("They are beasts as well as wonders, and those who hunt them take meat and hide. Whether that is worth the flowers is a question we have never settled.")
         ));
     }
 
     private static Chapter theOtherSide()
     {
         return new Chapter("The Other Side", List.of(
-                Block.text("When you die, you do not leave. Your body stays where it fell, holding everything you carried, and you remain beside it - unseen, unheard, drifting where you please and touching nothing."),
-                Block.text("The living cannot see you at all. Neither can they see your hunters, nor anything else behind the veil. To them that ground is simply empty."),
-                Block.text("You cannot break, build, lift or strike. You can only wait. After one full day the waiting ends badly: your body and everything in it crumbles, and you wake at your bed with nothing."),
-                Block.text("A pet that dies waits in the same way, beside its own body, and waits forever. Nothing brings an animal back on its own."),
-                Block.text("To fetch anyone back, someone living must come after them. That is the Rite, and it is forbidden work."),
-                Block.text("Draw a ring entirely in Black Chalk and cut its heart with an Athame. Half your blood is the toll. A Ferryman rises where you stood, and you step out of your own body and across."),
+                Block.text("When the wingless die, they do not leave. The body stays where it fell, holding everything they carried, and they stay beside it - unseen, unheard, drifting where they please and touching nothing."),
+                Block.text("The living cannot see them, nor the things that hunt them, nor anything else behind the veil. To the living, that ground is only empty."),
+                Block.text("They cannot break or build, lift or strike. They can only wait, and not for long: after half a moon - ten short minutes - the waiting ends badly. The body and everything in it crumbles, and they wake in their bed with nothing."),
+                Block.text("A pet that dies waits the same way, beside its own body, and waits forever. So does any villager, and anything that was ever given a name - a name is what makes something someone, and someone is what the veil keeps. Our own fallen go to the court instead, to wait for the queen."),
+                Block.text("A zombie was someone once. Kill one, and now and then a villager steps free of it on the other side, waiting to be led home."),
+                Block.text("Someone living can go after the dead. That is the Rite, and it is forbidden work."),
+                Block.text("Chalk a ring all in black and cut its heart with an Athame. Half your blood is the toll. A Ferryman rises where you stood, and you step out of your body and across."),
                 Block.figure(FayeFigure.circle(solid(RuneColor.BLACK), Component.literal("The Rite of Passage"))),
                 Block.figure(FayeFigure.items(row(ModItems.BLACK_CHALK.get(), ModItems.ATHAME.get()), FRAME, FILL)),
-                Block.text("You keep everything - your gear, your health, your hunger - because unlike the honest dead you can still be hurt over there, and you will need to be armed."),
-                Block.text("Phantoms hunt whoever crosses by the Rite. The longer you linger the more of them come, and they come only for you; the honest dead they ignore. Daylight does not burn them."),
-                Block.text("Lead the dead you came for to the Ferryman and have them touch him. They wake in their own body with half their strength. Any animal within fifteen paces of him comes home when you do."),
-                Block.text("Touch him yourself and you are finished: he goes out in a puff of smoke and you return to the body you left. Do it last, or the way home closes on whoever is still out there."),
-                Block.text("Die over there yourself and everything you carried is gone for good, as though you had fallen into lava. The Ferryman leaves without you."),
-                Block.text("The Rite leaves a mark. Marked by the Dark, no heartstone will sing for you and no circle will answer. Swim ten unbroken seconds in Wellspring Water to wash it off.")
+                Block.text("Whoever crosses by the Rite keeps everything - gear, health, hunger - because unlike the honest dead they can still be hurt over there, and they will need to be armed."),
+                Block.text("Phantoms hunt the Rite-crossed. The longer they linger the more of them come, and they come only for them; the honest dead are left alone. Daylight does not burn these."),
+                Block.text("Lead the dead to the Ferryman and have them touch him, and they wake in their own bodies with half their strength. Any animal within fifteen paces of him comes home with whoever summoned him."),
+                Block.text("The summoner touches him last. He goes out in a breath of smoke, and they return to the body they left. Touch him first, and the way home closes on whoever is still out there."),
+                Block.text("Die over there and everything you carried is gone for good, as though into lava. The Ferryman leaves without you, and all the living hear is that your soul has rejoined the crucible and been reborn."),
+                Block.text("The Rite leaves a mark. The Marked cannot make a heartstone sing or a ring answer; a single dark wisp circles them, as the black one circles the queen; and now and then they glimpse the Ferryman himself watching them - gone when they look again. Ten unbroken seconds swimming in the Wellspring washes the Mark away."),
+                Block.text("Die with a curse on you and you come back wrong: a poltergeist, a ghost whose touch still reaches doors, chests and buttons, who can call the rain and now and then raise a skeleton out of the ground. The Ferryman brings a poltergeist home the same as anyone.")
         ));
     }
 
     private static Chapter thisVeryBook()
     {
         return new Chapter("This Very Book", List.of(
-                Block.text("What you hold is not paper and ink, nor any binding a mortal press ever made - the Faye's own script does not sit still on a flat page the way yours does."),
-                Block.text("Sylvaine herself is said to have written it, in her own hand, into a shape closer to a living thing than a book - which is why, they say, it never truly closes, even resting on a shelf.")
+                Block.text("What you hold is not paper and ink. Sylvaine wrote it in her own hand, into a shape closer to a living thing than a book - which is why it never truly closes, even resting on a shelf, and why it lifts itself up to face whoever reads it."),
+                Block.text("Now and then one of us sells a copy to the wingless, for a handful of redstone. Let them read it. It is still ours, every word, and it was written for us.")
         ));
     }
 

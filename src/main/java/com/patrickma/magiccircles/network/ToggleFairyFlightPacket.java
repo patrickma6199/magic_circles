@@ -8,11 +8,11 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
- * Sent client->server the instant the local player double-taps jump while Blessed by the
- * Wellspring and airborne (see {@code client/FairyFlightInput}) - empty payload, it's a pure
- * event, not data. {@link FairyFlightManager#toggleFairyFlight} does the actual toggling
- * server-side, with its own defensive re-checks (never trusts the client's word alone for
- * anything that matters).
+ * Sent client->server when a gliding player jumps to fold their fairy wings (see {@code
+ * client/FairyFlightInput}) - empty payload, a pure event. Opening the wings needs no packet of
+ * our own: the client sends vanilla's own start-gliding command, which the server runs through
+ * {@code Player#tryToStartFallFlying} (see {@code mixin/PlayerMixin}). Vanilla has no matching
+ * "stop" command, which is the only reason this exists.
  */
 public final class ToggleFairyFlightPacket
 {
@@ -32,7 +32,7 @@ public final class ToggleFairyFlightPacket
             ServerPlayer player = context.getSender();
             if (player != null)
             {
-                FairyFlightManager.toggleFairyFlight(player);
+                FairyFlightManager.foldWings(player);
             }
         });
         context.setPacketHandled(true);

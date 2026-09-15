@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "magiccircles:block/living_wood_log",
+    "side": "magiccircles:block/living_wood_log"
+  }
+}

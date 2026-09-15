@@ -125,6 +125,23 @@ public class HeartCoreBlock extends BaseEntityBlock
             return absorbHeart.absorbRingIntoHeartstone((ServerLevel) level, player, hand);
         }
 
+        // An athame at a heart is always a dark rite, never a Wellspring spell - handled here, ahead
+        // of the refusal below, because the heart does not get a say. Above all this is what the
+        // summoning needs: it is worked on a full Heartstone and destroys it, and a Marked caster is
+        // exactly who would perform it. The Wellspring's will is weaker than theirs here.
+        if (stack.is(ModItems.ATHAME.get()))
+        {
+            if (!com.patrickma.magiccircles.item.AthameItem.isDarkRing(level, pos))
+            {
+                return InteractionResult.PASS;
+            }
+            if (level.isClientSide)
+            {
+                return InteractionResult.SUCCESS;
+            }
+            return com.patrickma.magiccircles.item.AthameItem.performRite((ServerLevel) level, player, pos, stack);
+        }
+
         if (!stack.is(ModItems.FAIRY_HORN.get()))
         {
             return InteractionResult.PASS;
@@ -138,15 +155,6 @@ public class HeartCoreBlock extends BaseEntityBlock
         if (!(level.getBlockEntity(pos) instanceof HeartCoreBlockEntity heart))
         {
             return InteractionResult.PASS;
-        }
-
-        // Forbidden magic (see limbo/RiteOfPassage) and a Heart Core's own magic are mutually
-        // exclusive - checked before anything else, including the shift-click mana query, since
-        // a Marked player isn't meant to interact with a working heart at all right now.
-        if (player.hasEffect(com.patrickma.magiccircles.registry.ModEffects.MARKED_BY_THE_DARK.get()))
-        {
-            player.displayClientMessage(Component.translatable("block.magiccircles.heart_core.marked_refusal").withStyle(ChatFormatting.DARK_PURPLE), true);
-            return InteractionResult.CONSUME;
         }
 
         // Checked before anything spell-related (and works even mid-spell) - shift-clicking is
@@ -181,6 +189,16 @@ public class HeartCoreBlock extends BaseEntityBlock
             }
             heart.setMana(heart.getMana() - HeartCoreBlockEntity.PORTAL_MANA_COST);
             heart.openWaterPortal(serverLevel, player);
+            return InteractionResult.CONSUME;
+        }
+
+        // Forbidden magic (see limbo/RiteOfPassage) and a Heart Core's own spells are mutually
+        // exclusive - a Marked player gets nothing from a working heart. Two things stay open to
+        // them, both above: asking a heart how much mana it holds, and opening the portal, which
+        // is the only road to the Wellspring - and the Wellspring is the only cure for the Mark.
+        if (player.hasEffect(com.patrickma.magiccircles.registry.ModEffects.MARKED_BY_THE_DARK.get()))
+        {
+            player.displayClientMessage(Component.translatable("block.magiccircles.heart_core.marked_refusal").withStyle(ChatFormatting.DARK_PURPLE), true);
             return InteractionResult.CONSUME;
         }
 
@@ -316,6 +334,11 @@ public class HeartCoreBlock extends BaseEntityBlock
         {
             ItemStack stack = new ItemStack(ModItems.HEARTSTONE.get());
             HeartstoneItem.setMana(stack, mana);
+            // Breaking the heart gives the stone back too, commission and all.
+            if (blockEntity instanceof HeartCoreBlockEntity heart && heart.carriedSpell() != null)
+            {
+                HeartstoneItem.setCommandedSpell(stack, heart.carriedSpell());
+            }
             popResource(level, pos, stack);
         }
 

@@ -27,12 +27,9 @@ import java.util.Random;
  * through every {@link RuneColor} plus white, matching the water's own color-cycling texture
  * (see {@code tools/gen_wellspring_water_texture.py}): "this water holds mana."
  *
- * <p>While a nearby Heart Core has Mana Font running (charging its mana from this Wellspring -
- * see {@code HeartCoreBlockEntity#startManaFontSpell}), the handful of wisps already orbiting
- * closest to the well peel off one at a time and fly straight into that heart, as if being drawn
- * in and absorbed, then reappear back at the well to rejoin their orbit - a continuous stream for
- * as long as the spell runs. Every farther-orbiting wisp is unaffected, which is what makes it
- * read as "closer wisps" rather than all of them.
+ * <p>These only orbit. The wisps a Heart Core running Mana Font draws in come from the Ancient
+ * Heartstone above the well instead (see {@link AncientHeartstoneWisps}), which uses this class's
+ * search for that heart ({@link #findActiveManaFontHeart}).
  *
  * <p>Finding the active heart is a small per-interval scan of already-loaded chunks around the
  * well ({@code ChunkSource#getChunkNow} never triggers a load of its own - {@code null} for
@@ -43,8 +40,9 @@ import java.util.Random;
 @Mod.EventBusSubscriber(modid = MagicCircles.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class WellspringWisps
 {
-    private static final int WISP_COUNT = 30;
-    private static final int ABSORB_COUNT = 8; // the closest-orbiting few are the ones eligible to fly in
+    /** One of each rune colour, and no more - the chamber's light is the Ancient Heartstone's own orbits. */
+    private static final int WISP_COUNT = 6;
+    private static final int ABSORB_COUNT = 3; // the closest-orbiting few are the ones eligible to fly in
     private static final double MIN_RADIUS = 2.5;
     private static final double MAX_RADIUS = 7.5;
     private static final double GOLDEN_ANGLE = 2.399963229728653;
@@ -84,12 +82,6 @@ public final class WellspringWisps
             wisps = createWisps();
         }
 
-        if (heartSearchCounter <= 0)
-        {
-            activeHeartPos = findActiveManaFontHeart(level);
-            heartSearchCounter = HEART_SEARCH_INTERVAL;
-        }
-        heartSearchCounter--;
 
         double time = level.getGameTime();
         BlockPos wellCenter = WorldTree.wellCenter();
@@ -169,7 +161,7 @@ public final class WellspringWisps
     }
 
     /** The first Mana-Font-active Heart Core found within {@value #HEART_SEARCH_RADIUS} blocks of the well, or {@code null}. */
-    private static BlockPos findActiveManaFontHeart(ClientLevel level)
+    static BlockPos findActiveManaFontHeart(ClientLevel level)
     {
         BlockPos wellCenter = WorldTree.wellCenter();
         int chunkRadius = (HEART_SEARCH_RADIUS >> 4) + 1;

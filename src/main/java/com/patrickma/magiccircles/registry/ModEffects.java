@@ -24,9 +24,7 @@ public class ModEffects
      * runs out, mid-cast or not.
      */
     public static final RegistryObject<MobEffect> BLESSED_BY_WELLSPRING = EFFECTS.register("blessed_by_wellspring",
-            () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0xB89CFF)
-            {
-            });
+            () -> new LastingEffect(MobEffectCategory.BENEFICIAL, 0xB89CFF));
 
     /**
      * The mark forbidden magic leaves on whoever performs {@code limbo/RiteOfPassage} - checked
@@ -38,9 +36,41 @@ public class ModEffects
      * seconds swimming in Wellspring Water is confirmed.
      */
     public static final RegistryObject<MobEffect> MARKED_BY_THE_DARK = EFFECTS.register("marked_by_the_dark",
-            () -> new MobEffect(MobEffectCategory.HARMFUL, 0x3A0A4A)
-            {
-            });
+            () -> new LastingEffect(MobEffectCategory.HARMFUL, 0x3A0A4A));
+
+    /**
+     * Sight across the veil without crossing it - from the red, green and black split ring (see
+     * {@code curse/TriColourRite}, {@code curse/Deathsight}). Checked live, like the others: the
+     * moment it lapses, the other side stops being sent to the caster.
+     */
+    public static final RegistryObject<MobEffect> DEATHSIGHT = EFFECTS.register("deathsight",
+            () -> new LastingEffect(MobEffectCategory.NEUTRAL, 0x6B2FA0));
+
+    /**
+     * Owed to the Fairy Queen, for being sent back from the dead (see {@code FairyTrades#acceptBargain}).
+     * What the debt costs is still to be decided - for now it is simply carried, and it doesn't expire.
+     */
+    public static final RegistryObject<MobEffect> INDEBTED = EFFECTS.register("indebted",
+            () -> new LastingEffect(MobEffectCategory.NEUTRAL, 0xC9A24B));
+
+    /**
+     * Every effect here means something - earned, cursed or bargained for - and none of it is the
+     * kind of thing a bucket of milk should wash off. Forge asks each effect what cures it; these
+     * answer: nothing.
+     */
+    private static class LastingEffect extends MobEffect
+    {
+        LastingEffect(MobEffectCategory category, int color)
+        {
+            super(category, color);
+        }
+
+        @Override
+        public java.util.List<net.minecraft.world.item.ItemStack> getCurativeItems()
+        {
+            return new java.util.ArrayList<>();
+        }
+    }
 
     private ModEffects()
     {

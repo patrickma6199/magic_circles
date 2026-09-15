@@ -23,11 +23,12 @@ public final class BookOfTheFayeWisp
     {
     }
 
-    public static void tick(Level level, BlockPos pos)
+    /** {@code lift} is how far the book itself has risen to be read - the wisp keeps above it. */
+    public static void tick(Level level, BlockPos pos, double lift)
     {
         double time = level.getGameTime();
         double x = pos.getX() + 0.5;
-        double y = pos.getY() + HEIGHT_ABOVE_BLOCK + BOB_AMPLITUDE * Math.sin(time * 0.04);
+        double y = pos.getY() + HEIGHT_ABOVE_BLOCK + lift + BOB_AMPLITUDE * Math.sin(time * 0.04);
         double z = pos.getZ() + 0.5;
         level.addParticle(new DustParticleOptions(WHITE, PARTICLE_SIZE), x, y, z, 0.0, 0.0, 0.0);
     }

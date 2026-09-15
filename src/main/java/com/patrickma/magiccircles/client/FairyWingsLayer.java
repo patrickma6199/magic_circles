@@ -23,42 +23,75 @@ import net.minecraft.world.entity.LivingEntity;
  * held, equipped as armor, or obtained any other way), so a real chestplate the player is wearing
  * renders completely normally underneath, at the same time.
  *
- * <p>Opens into the real elytra glide pose (via {@link FairyWingsModel}, the same mesh as
- * vanilla's own {@code ElytraModel}) exactly while {@code isSwimming() && !isInWater()} - the
- * synced signal {@code FairyFlightManager} forces true precisely while a Blessed player is
- * actually fairy-flying (and never true for a genuinely wet, ordinarily-swimming player, since
- * real swimming requires being in water and fairy-flight requires not being in it) - not vanilla's
- * own {@code isFallFlying()}, which this mod deliberately never touches (see {@link
- * FairyWingsModel}'s own doc comment for why). Folded closed the rest of the time, same as a worn
- * Elytra looks when not gliding.
+ * <p>Opens into the glide pose (via {@link FairyWingsModel}, the same mesh as vanilla's own {@code
+ * ElytraModel}) exactly while the wearer {@code isFallFlying()} - a synced flag, so every observer
+ * sees the same thing - and folds shut the rest of the time, the way a worn elytra looks when not
+ * gliding. Vanilla's own elytra layer never draws anything here, since there is no elytra in the
+ * chest slot for it to find.
+ *
+ * <p>The Fairy Queen wears her own, larger wings instead (see {@link QueenWingsModel}).
  */
 public class FairyWingsLayer<T extends LivingEntity, M extends EntityModel<T>> extends RenderLayer<T, M>
 {
     private static final ResourceLocation TEXTURE = new ResourceLocation(MagicCircles.MOD_ID, "textures/entity/fairy_wings.png");
+    private static final ResourceLocation QUEEN_TEXTURE = new ResourceLocation(MagicCircles.MOD_ID, "textures/entity/fairy_queen_wings.png");
+    /** On top of her renderer's own scale - her wings are half again a fairy's. */
+    private static final float QUEEN_WING_SCALE = 1.25F;
     private final FairyWingsModel<T> model;
+    private final QueenWingsModel<T> queenModel;
+    /** How solid a ghost's wings look - about as faint as the ghost's own body. */
+    private static final float GHOST_ALPHA = 0.3F;
 
     public FairyWingsLayer(RenderLayerParent<T, M> parent, EntityModelSet modelSet)
     {
         super(parent);
         this.model = new FairyWingsModel<>(modelSet.bakeLayer(ModelLayers.ELYTRA));
+        this.queenModel = new QueenWingsModel<>(modelSet.bakeLayer(QueenWingsModel.LAYER));
     }
 
     @Override
     public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch)
     {
-        if (!entity.hasEffect(ModEffects.BLESSED_BY_WELLSPRING.get()))
+        // A fairy is born with its wings; everyone else wears them only while Blessed.
+        boolean fairy = entity instanceof com.patrickma.magiccircles.entity.FairyEntity;
+        if (!fairy && !entity.hasEffect(ModEffects.BLESSED_BY_WELLSPRING.get()))
         {
             return;
         }
 
-        boolean gliding = entity.isSwimming() && !entity.isInWater();
+        // Spread in flight, folded on the ground - and folded on the throne too.
+        boolean seated = entity instanceof com.patrickma.magiccircles.entity.FairyQueenEntity queen && queen.isSeated();
+        boolean gliding = fairy ? !entity.onGround() && !seated : entity.isFallFlying();
 
+        boolean queen = entity instanceof com.patrickma.magiccircles.entity.FairyQueenEntity;
+        ResourceLocation texture = queen ? QUEEN_TEXTURE : TEXTURE;
+        net.minecraft.client.model.EntityModel<T> wings;
         poseStack.pushPose();
         poseStack.translate(0.0F, 0.0F, 0.125F);
-        this.getParentModel().copyPropertiesTo(this.model);
-        this.model.setupGlideAnim(entity, gliding);
-        VertexConsumer consumer = ItemRenderer.getArmorFoilBuffer(buffer, RenderType.armorCutoutNoCull(TEXTURE), false, false);
-        this.model.renderToBuffer(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        if (queen)
+        {
+            poseStack.scale(QUEEN_WING_SCALE, QUEEN_WING_SCALE, QUEEN_WING_SCALE);
+            this.getParentModel().copyPropertiesTo(this.queenModel);
+            this.queenModel.setupGlideAnim(entity, gliding);
+            wings = this.queenModel;
+        }
+        else
+        {
+            this.getParentModel().copyPropertiesTo(this.model);
+            this.model.setupGlideAnim(entity, gliding);
+            wings = this.model;
+        }
+        if (entity.isInvisible())
+        {
+            // A fairy's ghost: the wings are as faint as the rest of it.
+            VertexConsumer ghostly = buffer.getBuffer(RenderType.entityTranslucent(texture));
+            wings.renderToBuffer(poseStack, ghostly, packedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, GHOST_ALPHA);
+        }
+        else
+        {
+            VertexConsumer consumer = ItemRenderer.getArmorFoilBuffer(buffer, RenderType.armorCutoutNoCull(texture), false, false);
+            wings.renderToBuffer(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        }
         poseStack.popPose();
     }
 }

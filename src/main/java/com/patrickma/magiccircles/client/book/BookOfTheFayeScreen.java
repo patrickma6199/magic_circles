@@ -31,7 +31,8 @@ public class BookOfTheFayeScreen extends Screen
     private static final Style BOOK_FONT = Style.EMPTY.withFont(new ResourceLocation("minecraft", "uniform"));
 
     private static final int PANEL_WIDTH = 340;
-    private static final int PANEL_HEIGHT = 222;
+    /** Tall enough for the contents page to list every chapter of the Book of the Faye above the page number. */
+    private static final int PANEL_HEIGHT = 256;
     private static final int MARGIN = 18;
     private static final int LINE_HEIGHT = 10;
     private static final int PARAGRAPH_GAP = 5;
@@ -41,22 +42,32 @@ public class BookOfTheFayeScreen extends Screen
     /** Vertical step between contents entries - shared by drawing and hit-testing so they cannot drift apart. */
     private static final int CONTENTS_STEP = LINE_HEIGHT + 3;
 
-    private static final int BORDER_DARK = 0xFF16301C;
-    private static final int BORDER_MID = 0xFF2F6B3A;
-    private static final int BORDER_LIGHT = 0xFF6BB877;
-    private static final int PARCHMENT = 0xFFEDE4CB;
-    private static final int INK = 0xFF3A2F1B;
-    private static final int HEADING = 0xFF1E5B2E;
-    private static final int FAINT = 0xFF8A7B58;
-
     private final List<Page> pages = new ArrayList<>();
+    private final BookStyle style;
+    private final List<FayeBookContent.Chapter> chapters;
     private int index;
     private int left;
     private int top;
 
-    public BookOfTheFayeScreen()
+    public BookOfTheFayeScreen(Component title, BookStyle style, List<FayeBookContent.Chapter> chapters)
     {
-        super(Component.literal("Book of the Faye"));
+        super(title);
+        this.style = style;
+        this.chapters = chapters;
+    }
+
+    /** The Faye's own book - green binding, clean parchment. */
+    public static BookOfTheFayeScreen ofTheFaye()
+    {
+        return new BookOfTheFayeScreen(Component.literal("Book of the Faye"),
+                BookStyle.FAYE, FayeBookContent.chapters());
+    }
+
+    /** The Art of Blood - dark purple, on torn pages. */
+    public static BookOfTheFayeScreen artOfBlood()
+    {
+        return new BookOfTheFayeScreen(Component.literal("The Art of Blood"),
+                BookStyle.BLOOD, ArtOfBloodContent.chapters());
     }
 
     @Override
@@ -118,7 +129,7 @@ public class BookOfTheFayeScreen extends Screen
         pages.clear();
         pages.add(new Page("Contents", true, List.of()));
 
-        for (FayeBookContent.Chapter chapter : FayeBookContent.chapters())
+        for (FayeBookContent.Chapter chapter : chapters)
         {
             List<Object> current = new ArrayList<>();
             boolean firstPage = true;
@@ -184,9 +195,9 @@ public class BookOfTheFayeScreen extends Screen
         {
             Component title = Component.literal(page.chapter()).withStyle(BOOK_FONT);
             int titleWidth = this.font.width(title);
-            graphics.drawString(this.font, title, left + (PANEL_WIDTH - titleWidth) / 2, y, HEADING, false);
+            graphics.drawString(this.font, title, left + (PANEL_WIDTH - titleWidth) / 2, y, style.heading(), false);
             graphics.fill(left + MARGIN + 30, y + LINE_HEIGHT + 2,
-                    left + PANEL_WIDTH - MARGIN - 30, y + LINE_HEIGHT + 3, BORDER_MID);
+                    left + PANEL_WIDTH - MARGIN - 30, y + LINE_HEIGHT + 3, style.borderMid());
             y += TITLE_BLOCK;
         }
 
@@ -201,7 +212,7 @@ public class BookOfTheFayeScreen extends Screen
 
         Component footer = Component.literal((index + 1) + " / " + pages.size()).withStyle(BOOK_FONT);
         graphics.drawString(this.font, footer,
-                left + PANEL_WIDTH / 2 - this.font.width(footer) / 2, top + PANEL_HEIGHT - 36, FAINT, false);
+                left + PANEL_WIDTH / 2 - this.font.width(footer) / 2, top + PANEL_HEIGHT - 36, style.faint(), false);
 
         super.render(graphics, mouseX, mouseY, partialTick);
     }
@@ -217,7 +228,7 @@ public class BookOfTheFayeScreen extends Screen
             }
             else if (item instanceof FormattedCharSequence line)
             {
-                graphics.drawString(this.font, line, left + MARGIN, y, INK, false);
+                graphics.drawString(this.font, line, left + MARGIN, y, style.ink(), false);
                 y += LINE_HEIGHT;
             }
             else if (item instanceof FayeFigure figure)
@@ -242,9 +253,9 @@ public class BookOfTheFayeScreen extends Screen
             }
             Component entry = Component.literal(page.chapter()).withStyle(BOOK_FONT);
             Component number = Component.literal(String.valueOf(i + 1)).withStyle(BOOK_FONT);
-            graphics.drawString(this.font, entry, left + MARGIN + 6, y, INK, false);
+            graphics.drawString(this.font, entry, left + MARGIN + 6, y, style.ink(), false);
             graphics.drawString(this.font, number,
-                    left + PANEL_WIDTH - MARGIN - 6 - this.font.width(number), y, FAINT, false);
+                    left + PANEL_WIDTH - MARGIN - 6 - this.font.width(number), y, style.faint(), false);
             y += CONTENTS_STEP;
         }
     }
@@ -279,15 +290,66 @@ public class BookOfTheFayeScreen extends Screen
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    /** The green binding: three nested rules around the parchment. */
+    /** The binding: three nested rules around the page, then the page itself. */
     private void drawFrame(GuiGraphics graphics)
     {
         int right = left + PANEL_WIDTH;
         int bottom = top + PANEL_HEIGHT;
-        graphics.fill(left - 4, top - 4, right + 4, bottom + 4, BORDER_DARK);
-        graphics.fill(left - 3, top - 3, right + 3, bottom + 3, BORDER_MID);
-        graphics.fill(left - 1, top - 1, right + 1, bottom + 1, BORDER_LIGHT);
-        graphics.fill(left, top, right, bottom, PARCHMENT);
+        graphics.fill(left - 4, top - 4, right + 4, bottom + 4, style.borderDark());
+        graphics.fill(left - 3, top - 3, right + 3, bottom + 3, style.borderMid());
+        graphics.fill(left - 1, top - 1, right + 1, bottom + 1, style.borderLight());
+        graphics.fill(left, top, right, bottom, style.page());
+
+        if (style.torn())
+        {
+            tearEdges(graphics, right, bottom);
+        }
+    }
+
+    /**
+     * Bites irregular notches out of all four edges, so the page reads as torn from something
+     * rather than cut. Deterministic rather than random per frame - a page that reshuffled its own
+     * tears every tick would shimmer. Each notch is painted in the binding colour, which is what
+     * sells it as the page ending early and the cover showing through behind it.
+     */
+    private void tearEdges(GuiGraphics graphics, int right, int bottom)
+    {
+        for (int y = top; y < bottom; y += 3)
+        {
+            int biteLeft = 1 + Math.floorMod(y * 7919, 4);
+            int biteRight = 1 + Math.floorMod(y * 6113, 4);
+            graphics.fill(left, y, left + biteLeft, y + 3, style.borderMid());
+            graphics.fill(right - biteRight, y, right, y + 3, style.borderMid());
+        }
+        for (int x = left; x < right; x += 3)
+        {
+            int biteTop = 1 + Math.floorMod(x * 5417, 4);
+            int biteBottom = 1 + Math.floorMod(x * 3571, 4);
+            graphics.fill(x, top, x + 3, top + biteTop, style.borderMid());
+            graphics.fill(x, bottom - biteBottom, x + 3, bottom, style.borderMid());
+        }
+    }
+
+    /** The placed book this screen is reading, if any - see {@link #removed}. */
+    @org.jetbrains.annotations.Nullable
+    private net.minecraft.core.BlockPos readingAt;
+
+    public BookOfTheFayeScreen readingAt(net.minecraft.core.BlockPos pos)
+    {
+        this.readingAt = pos;
+        return this;
+    }
+
+    /** Putting the book down: tells the server, so everyone else watching sees it close. */
+    @Override
+    public void removed()
+    {
+        super.removed();
+        if (readingAt != null && minecraft != null && minecraft.getConnection() != null)
+        {
+            com.patrickma.magiccircles.network.ModNetworking.CHANNEL.sendToServer(
+                    new com.patrickma.magiccircles.network.CloseBookPacket(readingAt));
+        }
     }
 
     @Override
@@ -296,3 +358,4 @@ public class BookOfTheFayeScreen extends Screen
         return false;
     }
 }
+

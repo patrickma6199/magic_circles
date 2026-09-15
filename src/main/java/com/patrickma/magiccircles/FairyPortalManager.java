@@ -75,6 +75,18 @@ public final class FairyPortalManager
     private static final Map<BlockPos, ActivePortal> ACTIVE_PORTALS = new HashMap<>();
     /** Pending one-way Lost Waystone trips, keyed by the traveler's UUID - see {@link #useWaystone}. */
     private static final Map<UUID, ActivePortal> WAYSTONE_TRIPS = new HashMap<>();
+    /**
+     * Pits lit by the Crossing sung from inside the Fairy Realm itself (see {@link #openWaterPortal}),
+     * keyed by their ring's centre. Each leads home rather than in - see {@link #goHome}. Forgotten
+     * when the server stops, like every other open portal.
+     */
+    private static final Map<BlockPos, Set<BlockPos>> HOMEWARD = new HashMap<>();
+    /**
+     * Whoever has just been carried across lands at the bottom of the far pit - so the bottom does
+     * not count for them until they have left its water once, or every crossing would bounce
+     * straight back. See {@link #onLivingTick}.
+     */
+    private static final Set<UUID> ARRIVED = new HashSet<>();
 
     /** The single shared Fairy Realm portal's water cells, or {@code null} while nothing is open. */
     @Nullable
@@ -159,6 +171,21 @@ public final class FairyPortalManager
             return;
         }
 
+        if (originLevel.dimension().equals(ModDimensions.FAIRY_REALM))
+        {
+            // Sung from inside Yllumere, the Crossing opens the way home, not another way in. There
+            // is nothing on this side to mirror it onto - doing so had it stamp a fresh rune over
+            // its own heart - and registering it as an origin had anyone drowning in it sent
+            // straight back into the same pool.
+            Set<BlockPos> homeward = waterPitPositions(originCenter);
+            for (BlockPos pos : homeward)
+            {
+                originLevel.setBlockAndUpdate(pos, ModBlocks.FAIRY_PORTAL_WATER.get().defaultBlockState());
+            }
+            HOMEWARD.put(originCenter.immutable(), homeward);
+            return;
+        }
+
         Set<BlockPos> originWater = waterPitPositions(originCenter);
         for (BlockPos pos : originWater)
         {
@@ -195,6 +222,10 @@ public final class FairyPortalManager
         {
             return false;
         }
+        if (fromLevel.dimension().equals(ModDimensions.FAIRY_REALM))
+        {
+            return leadHome(player, fromLevel);
+        }
 
         BlockPos destCenter = com.patrickma.magiccircles.worldgen.FairyPortalRuins.portalCenter();
         openSharedDestination(fairyRealm, destCenter);
@@ -206,7 +237,105 @@ public final class FairyPortalManager
         player.setAirSupply(player.getMaxAirSupply());
         player.teleportTo(fairyRealm, destLanding.getX() + 0.5, destLanding.getY(), destLanding.getZ() + 0.5,
                 Set.of(), player.getYRot(), player.getXRot());
+        ARRIVED.add(player.getUUID());
         return true;
+    }
+
+    /**
+     * A Lost Waystone used inside the Fairy Realm - the emergency way out. Open portals only last as
+     * long as the server that opened them, so anyone who logs off in Yllumere would otherwise come
+     * back to a dark pool and no way home. If a portal of their own is still open behind them, this
+     * takes them back through it exactly as swimming down would; otherwise it sends them to wherever
+     * they would respawn, and failing that to the world's spawn.
+     */
+    private static boolean leadHome(ServerPlayer player, ServerLevel fromLevel)
+    {
+        MinecraftServer server = fromLevel.getServer();
+        player.displayClientMessage(net.minecraft.network.chat.Component.translatable("item.magiccircles.lost_waystone.home"), true);
+        fromLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
+                player.getX(), player.getY() + 1.0, player.getZ(), 30, 0.4, 0.8, 0.4, 0.05);
+        player.setAirSupply(player.getMaxAirSupply());
+
+        if (hasOwnEntry(player))
+        {
+            returnFromFairyRealm(player, fromLevel);
+            return true;
+        }
+
+        sendToRespawn(player, server, false);
+        return true;
+    }
+
+    /**
+     * Out of the Fairy Realm to wherever this player would respawn - or, with {@code overworldOnly},
+     * only if that is in the overworld - and failing that, to the world's spawn.
+     */
+    private static void sendToRespawn(ServerPlayer player, MinecraftServer server, boolean overworldOnly)
+    {
+        ServerLevel respawnLevel = server.getLevel(player.getRespawnDimension());
+        BlockPos respawnPos = player.getRespawnPosition();
+        if (respawnLevel != null && respawnPos != null && !respawnLevel.dimension().equals(ModDimensions.FAIRY_REALM)
+                && (!overworldOnly || respawnLevel.dimension().equals(net.minecraft.world.level.Level.OVERWORLD)))
+        {
+            java.util.Optional<net.minecraft.world.phys.Vec3> spot = net.minecraft.world.entity.player.Player
+                    .findRespawnPositionAndUseSpawnBlock(respawnLevel, respawnPos, player.getRespawnAngle(),
+                            player.isRespawnForced(), true);
+            if (spot.isPresent())
+            {
+                player.teleportTo(respawnLevel, spot.get().x, spot.get().y, spot.get().z,
+                        Set.of(), player.getRespawnAngle(), 0.0f);
+                return;
+            }
+        }
+
+        ServerLevel overworld = server.overworld();
+        BlockPos spawn = overworld.getSharedSpawnPos();
+        int surface = overworld.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                spawn.getX(), spawn.getZ());
+        player.teleportTo(overworld, spawn.getX() + 0.5, surface, spawn.getZ() + 0.5,
+                Set.of(), player.getYRot(), player.getXRot());
+    }
+
+    /**
+     * Cast out by the queen (see {@code QueensBanishment}): straight back to the overworld - to their
+     * bed if it lies there, otherwise to the world's spawn. Any waystone trip they were on is over.
+     */
+    public static void banishToOverworld(ServerPlayer player)
+    {
+        MinecraftServer server = player.getServer();
+        if (server == null)
+        {
+            return;
+        }
+        WAYSTONE_TRIPS.remove(player.getUUID());
+        player.setAirSupply(player.getMaxAirSupply());
+        sendToRespawn(player, server, true);
+    }
+
+    /** Whether this player still has a way back of their own - a waystone trip, or a portal they opened and came through. */
+    private static boolean hasOwnEntry(ServerPlayer player)
+    {
+        if (WAYSTONE_TRIPS.containsKey(player.getUUID()))
+        {
+            return true;
+        }
+        for (ActivePortal portal : ACTIVE_PORTALS.values())
+        {
+            if (portal.openerUuid.equals(player.getUUID()) && portal.openerReachedDest)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Fills a ring's pit with plain water, ready to be sung into a Crossing - how the ruined chamber's own waiting ring is laid (see {@code FairyPortalRuins}). */
+    public static void fillWaterPit(ServerLevel level, BlockPos center)
+    {
+        for (BlockPos pos : waterPitPositions(center))
+        {
+            level.setBlock(pos, Blocks.WATER.defaultBlockState(), 2);
+        }
     }
 
     /** Makes sure the shared destination's water pit exists and is lit as portal fluid - idempotent, safe to call every time a new origin opens. */
@@ -238,9 +367,14 @@ public final class FairyPortalManager
                 destLevel.setBlockAndUpdate(destCenter.offset(dx, 0, dz), state);
             }
         }
-        destLevel.setBlockAndUpdate(destCenter, ModBlocks.MAGIC_CIRCLE.get().defaultBlockState()
-                .setValue(MagicCircleBlock.VARIANT, destLevel.random.nextInt(MagicCircleBlock.VARIANT_COUNT))
-                .setValue(MagicCircleBlock.COLOR, centerColor));
+        // Never over a heart already sitting there - the ruined chamber keeps its own, full, for
+        // whoever is stranded on this side (see FairyPortalRuins).
+        if (!destLevel.getBlockState(destCenter).is(ModBlocks.HEART_CORE.get()))
+        {
+            destLevel.setBlockAndUpdate(destCenter, ModBlocks.MAGIC_CIRCLE.get().defaultBlockState()
+                    .setValue(MagicCircleBlock.VARIANT, destLevel.random.nextInt(MagicCircleBlock.VARIANT_COUNT))
+                    .setValue(MagicCircleBlock.COLOR, centerColor));
+        }
     }
 
     /**
@@ -270,7 +404,13 @@ public final class FairyPortalManager
         if (serverLevel.dimension().equals(ModDimensions.FAIRY_REALM) && destWater != null && destWater.contains(eyePos))
         {
             event.setCanceled(true);
-            returnFromFairyRealm(entity, serverLevel);
+            crossSoon(entity, serverLevel, () -> returnFromFairyRealm(entity, serverLevel));
+            return;
+        }
+        if (serverLevel.dimension().equals(ModDimensions.FAIRY_REALM) && inHomewardPit(eyePos))
+        {
+            event.setCanceled(true);
+            crossSoon(entity, serverLevel, () -> goHome(entity, serverLevel));
             return;
         }
 
@@ -278,8 +418,71 @@ public final class FairyPortalManager
         if (origin != null)
         {
             event.setCanceled(true);
-            enterFairyRealm(entity, origin);
+            crossSoon(entity, serverLevel, () -> enterFairyRealm(entity, origin));
         }
+    }
+
+    /** Crossings noticed this tick, carried out at the start of the next - see {@link #crossSoon}. */
+    private static final List<Crossing> pendingCrossings = new ArrayList<>();
+    private static final Set<UUID> crossingEntities = new HashSet<>();
+
+    /**
+     * Queues a crossing for the start of the next server tick instead of making it on the spot.
+     *
+     * <p>The drowning check that notices a crossing runs in the middle of the entity's own tick,
+     * and vanilla ends a player's tick by putting them back where the tick began - in whichever
+     * level they are in by then. A crossing made from inside it left the player standing at their
+     * old overworld coordinates in the Fairy Realm for that moment, far outside the island, and
+     * the realm's shield ({@code FairyRealmShield}) duly shoved them back onto its surface - under
+     * the island - before they ever reached the portal. A Lost Waystone never had the problem only
+     * because using an item happens outside the player's tick. The air is refilled straight away,
+     * so the drowning check doesn't keep firing while the crossing waits.
+     */
+    private static void crossSoon(LivingEntity entity, ServerLevel from, Runnable crossing)
+    {
+        entity.setAirSupply(entity.getMaxAirSupply());
+        if (crossingEntities.add(entity.getUUID()))
+        {
+            pendingCrossings.add(new Crossing(entity, from, crossing));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerTickStart(TickEvent.ServerTickEvent event)
+    {
+        if (event.phase != TickEvent.Phase.START || pendingCrossings.isEmpty())
+        {
+            return;
+        }
+        List<Crossing> batch = new ArrayList<>(pendingCrossings);
+        pendingCrossings.clear();
+        crossingEntities.clear();
+        for (Crossing pending : batch)
+        {
+            // Skipped if it died, or went somewhere else by other means, in the meantime.
+            if (pending.entity.isAlive() && !pending.entity.isRemoved() && pending.entity.level() == pending.from)
+            {
+                pending.crossing.run();
+            }
+        }
+    }
+
+    private record Crossing(LivingEntity entity, ServerLevel from, Runnable crossing)
+    {
+    }
+
+    /**
+     * Whether this block of portal fluid belongs to a portal that is open right now. Anything else is
+     * left over from one that closed without being tidied - a server restart forgets every open
+     * portal - and {@code block/FairyPortalWaterBlock} turns it back into the plain water it was.
+     */
+    public static boolean isLivePortalWater(Level level, BlockPos pos)
+    {
+        if (level.dimension().equals(ModDimensions.FAIRY_REALM) && (destWater != null && destWater.contains(pos) || inHomewardPit(pos)))
+        {
+            return true;
+        }
+        return findOriginAt(level.dimension(), pos) != null;
     }
 
     @Nullable
@@ -311,6 +514,7 @@ public final class FairyPortalManager
         entity.setAirSupply(entity.getMaxAirSupply());
         entity.teleportTo(fairyRealm, destLanding.getX() + 0.5, destLanding.getY(), destLanding.getZ() + 0.5,
                 Set.of(), entity.getYRot(), entity.getXRot());
+        ARRIVED.add(entity.getUUID());
 
         if (entity instanceof ServerPlayer player && player.getUUID().equals(origin.openerUuid))
         {
@@ -355,6 +559,11 @@ public final class FairyPortalManager
         ActivePortal target = ownEntry != null ? ownEntry : pickRandomOrigin();
         if (target == null)
         {
+            // Nowhere open on the other side: home is wherever they last slept.
+            if (entity instanceof ServerPlayer player)
+            {
+                sendToRespawn(player, server, false);
+            }
             return;
         }
 
@@ -371,10 +580,124 @@ public final class FairyPortalManager
         BlockPos landing = target.originLanding;
         entity.teleportTo(toLevel, landing.getX() + 0.5, landing.getY(), landing.getZ() + 0.5,
                 Set.of(), entity.getYRot(), entity.getXRot());
+        ARRIVED.add(entity.getUUID());
 
         if (target == ownEntry)
         {
             closeEntry(server, target);
+        }
+    }
+
+    private static boolean inHomewardPit(BlockPos pos)
+    {
+        return homewardPitAt(pos) != null;
+    }
+
+    @Nullable
+    private static Set<BlockPos> homewardPitAt(BlockPos pos)
+    {
+        for (Set<BlockPos> water : HOMEWARD.values())
+        {
+            if (water.contains(pos))
+            {
+                return water;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Touching the bottom of a portal pit crosses at once - no waiting to drown (which still works
+     * too, see {@link #onLivingDrown}). The bottom is the pit's lowest layer of portal water: feet
+     * in it, with no more portal water beneath them. Anyone who has only just arrived through a pit
+     * must leave its water once before its bottom counts for them - see {@link #ARRIVED}.
+     */
+    @SubscribeEvent
+    public static void onLivingTick(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event)
+    {
+        LivingEntity entity = event.getEntity();
+        if (!(entity.level() instanceof ServerLevel serverLevel)
+                || ACTIVE_PORTALS.isEmpty() && destWater == null && HOMEWARD.isEmpty() && ARRIVED.isEmpty())
+        {
+            return;
+        }
+        BlockPos feet = entity.blockPosition();
+        boolean inRealm = serverLevel.dimension().equals(ModDimensions.FAIRY_REALM);
+        Set<BlockPos> pit = null;
+        Runnable crossing = null;
+        if (inRealm && destWater != null && destWater.contains(feet))
+        {
+            pit = destWater;
+            crossing = () -> returnFromFairyRealm(entity, serverLevel);
+        }
+        else if (inRealm && homewardPitAt(feet) != null)
+        {
+            pit = homewardPitAt(feet);
+            crossing = () -> goHome(entity, serverLevel);
+        }
+        else
+        {
+            ActivePortal origin = findOriginAt(serverLevel.dimension(), feet);
+            if (origin != null)
+            {
+                pit = origin.originWater;
+                crossing = () -> enterFairyRealm(entity, origin);
+            }
+        }
+        if (pit == null)
+        {
+            ARRIVED.remove(entity.getUUID());
+            return;
+        }
+        if (ARRIVED.contains(entity.getUUID()) || pit.contains(feet.below()))
+        {
+            return;
+        }
+        crossSoon(entity, serverLevel, crossing);
+    }
+
+    /**
+     * Through a pit lit from inside the Fairy Realm: a player goes back through their own way in if
+     * one is still open behind them, and otherwise to wherever they last slept, or the world's spawn.
+     * Anything else that drowns there goes out through an open portal if there is one.
+     */
+    private static void goHome(LivingEntity entity, ServerLevel fromLevel)
+    {
+        if (entity instanceof ServerPlayer player && !hasOwnEntry(player))
+        {
+            entity.setAirSupply(entity.getMaxAirSupply());
+            sendToRespawn(player, fromLevel.getServer(), false);
+            return;
+        }
+        returnFromFairyRealm(entity, fromLevel);
+    }
+
+    /** A homeward pit closes once its ring is broken or its water spoiled - never touching water the shared pool is still using. */
+    private static void checkHomeward(MinecraftServer server)
+    {
+        ServerLevel fairyRealm = server.getLevel(ModDimensions.FAIRY_REALM);
+        if (fairyRealm == null)
+        {
+            return;
+        }
+        Iterator<Map.Entry<BlockPos, Set<BlockPos>>> iterator = HOMEWARD.entrySet().iterator();
+        while (iterator.hasNext())
+        {
+            Map.Entry<BlockPos, Set<BlockPos>> entry = iterator.next();
+            if (!fairyRealm.isLoaded(entry.getKey()))
+            {
+                continue;
+            }
+            if (!PortalRitual.matchesBorder(fairyRealm, entry.getKey()) || !isPortalWaterIntact(server, ModDimensions.FAIRY_REALM, entry.getValue()))
+            {
+                iterator.remove();
+                Set<BlockPos> water = new HashSet<>(entry.getValue());
+                if (destWater != null)
+                {
+                    water.removeAll(destWater);
+                }
+                revertToWater(server, ModDimensions.FAIRY_REALM, water);
+            }
         }
     }
 
@@ -407,6 +730,48 @@ public final class FairyPortalManager
         closeEntry(level.getServer(), portal);
     }
 
+    /** Whether this server run has checked the Fairy Realm's pool for fluid left over from before it started. */
+    private static boolean staleDestinationCleared;
+
+    /**
+     * Every open portal is forgotten when the server stops, but the portal fluid it left in the
+     * Fairy Realm's pool is saved with the world - so the pool came back looking like a portal and
+     * doing nothing. Once per server run, before anything can open a new one, it goes back to water.
+     */
+    private static void clearStaleDestination(MinecraftServer server)
+    {
+        ServerLevel fairyRealm = server.getLevel(ModDimensions.FAIRY_REALM);
+        if (fairyRealm == null || destWater != null)
+        {
+            return;
+        }
+        for (BlockPos pos : waterPitPositions(com.patrickma.magiccircles.worldgen.FairyPortalRuins.portalCenter()))
+        {
+            if (fairyRealm.getBlockState(pos).is(ModBlocks.FAIRY_PORTAL_WATER.get()))
+            {
+                fairyRealm.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
+            }
+        }
+    }
+
+    /**
+     * In singleplayer the same game can start several worlds one after another, and none of this
+     * belongs to the next one.
+     */
+    @SubscribeEvent
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event)
+    {
+        ACTIVE_PORTALS.clear();
+        WAYSTONE_TRIPS.clear();
+        HOMEWARD.clear();
+        ARRIVED.clear();
+        destWater = null;
+        destLanding = null;
+        staleDestinationCleared = false;
+        pendingCrossings.clear();
+        crossingEntities.clear();
+    }
+
     private static int integrityCheckCounter = 0;
     private static final int PORTAL_INTEGRITY_CHECK_INTERVAL = 20;
 
@@ -419,7 +784,20 @@ public final class FairyPortalManager
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event)
     {
-        if (event.phase != TickEvent.Phase.END || destWater == null)
+        if (event.phase != TickEvent.Phase.END)
+        {
+            return;
+        }
+        if (!staleDestinationCleared)
+        {
+            staleDestinationCleared = true;
+            clearStaleDestination(event.getServer());
+        }
+        if (!HOMEWARD.isEmpty() && event.getServer().getTickCount() % PORTAL_INTEGRITY_CHECK_INTERVAL == 0)
+        {
+            checkHomeward(event.getServer());
+        }
+        if (destWater == null)
         {
             return;
         }

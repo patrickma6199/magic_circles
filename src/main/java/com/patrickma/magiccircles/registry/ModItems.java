@@ -40,7 +40,7 @@ public class ModItems
     public static final RegistryObject<Item> PURPLE_CHALK = ITEMS.register("purple_chalk",
             () -> new ColoredChalkItem(ModBlocks.MAGIC_CIRCLE.get(), new Item.Properties().durability(200), RuneColor.PURPLE));
 
-    /** Same idea as {@link #GOLD_CHALK}, marked Red instead. How to craft this is still undecided - creative-only for now. */
+    /** Same idea as {@link #GOLD_CHALK}, marked Red instead. No recipe: a Dream Elk fed Arcane Dust passes one - see {@code entity/DreamElkEntity#mobInteract}. */
     public static final RegistryObject<Item> RED_CHALK = ITEMS.register("red_chalk",
             () -> new ColoredChalkItem(ModBlocks.MAGIC_CIRCLE.get(), new Item.Properties().durability(200), RuneColor.RED));
 
@@ -73,6 +73,31 @@ public class ModItems
             () -> new BlockItem(ModBlocks.LIVING_WOOD_LOG.get(), new Item.Properties()));
     public static final RegistryObject<Item> LIVING_WOOD_LEAVES = ITEMS.register("living_wood_leaves",
             () -> new BlockItem(ModBlocks.LIVING_WOOD_LEAVES.get(), new Item.Properties()));
+    // Everything made from Living Wood - see ModBlocks#STRIPPED_LIVING_WOOD_LOG and the rest of that family.
+    public static final RegistryObject<Item> STRIPPED_LIVING_WOOD_LOG = ITEMS.register("stripped_living_wood_log",
+            () -> new BlockItem(ModBlocks.STRIPPED_LIVING_WOOD_LOG.get(), new Item.Properties()));
+    public static final RegistryObject<Item> LIVING_WOOD = ITEMS.register("living_wood",
+            () -> new BlockItem(ModBlocks.LIVING_WOOD.get(), new Item.Properties()));
+    public static final RegistryObject<Item> STRIPPED_LIVING_WOOD = ITEMS.register("stripped_living_wood",
+            () -> new BlockItem(ModBlocks.STRIPPED_LIVING_WOOD.get(), new Item.Properties()));
+    public static final RegistryObject<Item> LIVING_WOOD_PLANKS = ITEMS.register("living_wood_planks",
+            () -> new BlockItem(ModBlocks.LIVING_WOOD_PLANKS.get(), new Item.Properties()));
+    public static final RegistryObject<Item> LIVING_WOOD_STAIRS = ITEMS.register("living_wood_stairs",
+            () -> new BlockItem(ModBlocks.LIVING_WOOD_STAIRS.get(), new Item.Properties()));
+    public static final RegistryObject<Item> LIVING_WOOD_SLAB = ITEMS.register("living_wood_slab",
+            () -> new BlockItem(ModBlocks.LIVING_WOOD_SLAB.get(), new Item.Properties()));
+    public static final RegistryObject<Item> LIVING_WOOD_FENCE = ITEMS.register("living_wood_fence",
+            () -> new BlockItem(ModBlocks.LIVING_WOOD_FENCE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> LIVING_WOOD_FENCE_GATE = ITEMS.register("living_wood_fence_gate",
+            () -> new BlockItem(ModBlocks.LIVING_WOOD_FENCE_GATE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> LIVING_WOOD_DOOR = ITEMS.register("living_wood_door",
+            () -> new net.minecraft.world.item.DoubleHighBlockItem(ModBlocks.LIVING_WOOD_DOOR.get(), new Item.Properties()));
+    public static final RegistryObject<Item> LIVING_WOOD_TRAPDOOR = ITEMS.register("living_wood_trapdoor",
+            () -> new BlockItem(ModBlocks.LIVING_WOOD_TRAPDOOR.get(), new Item.Properties()));
+    public static final RegistryObject<Item> LIVING_WOOD_BUTTON = ITEMS.register("living_wood_button",
+            () -> new BlockItem(ModBlocks.LIVING_WOOD_BUTTON.get(), new Item.Properties()));
+    public static final RegistryObject<Item> LIVING_WOOD_PRESSURE_PLATE = ITEMS.register("living_wood_pressure_plate",
+            () -> new BlockItem(ModBlocks.LIVING_WOOD_PRESSURE_PLATE.get(), new Item.Properties()));
 
     /** Pale pink/gold, matching {@link com.patrickma.magiccircles.entity.PixieEntity}'s own recolor. */
     public static final RegistryObject<Item> PIXIE_SPAWN_EGG = ITEMS.register("pixie_spawn_egg",
@@ -82,27 +107,32 @@ public class ModItems
     public static final RegistryObject<Item> DREAM_ELK_SPAWN_EGG = ITEMS.register("dream_elk_spawn_egg",
             () -> new ForgeSpawnEggItem(ModEntities.DREAM_ELK, 0x6B4A2E, 0xD6C5A8, new Item.Properties()));
 
+    public static final RegistryObject<Item> FAIRY_SPAWN_EGG = ITEMS.register("fairy_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.FAIRY, 0xF4A7C8, 0x7FBF6A, new Item.Properties()));
+
     /**
      * Dropped by {@link com.patrickma.magiccircles.entity.ManaWyrmEntity} on death - a plain
-     * minor food, same as vanilla raw fish, plus 1 minute of {@link ModEffects#BLESSED_BY_WELLSPRING}
-     * - see that effect's own doc comment for what it unlocks.
+     * minor food, same as vanilla raw fish, that can be eaten even when full, and adds 1 minute of
+     * {@link ModEffects#BLESSED_BY_WELLSPRING} on top of whatever is left (see {@code
+     * WellspringBlessing#onFinishEating} - not a food effect, which could only ever replace it).
      */
     public static final RegistryObject<Item> RAW_MANA_WYRM = ITEMS.register("raw_mana_wyrm",
             () -> new Item(new Item.Properties().food(new FoodProperties.Builder()
                     .nutrition(2).saturationMod(0.1f)
-                    .effect(() -> new MobEffectInstance(ModEffects.BLESSED_BY_WELLSPRING.get(), 20 * 60, 0), 1.0f)
+                    .alwaysEat()
                     .build())));
 
     /**
      * Cooked from {@link #RAW_MANA_WYRM} - 5 full hunger icons (10 nutrition) plus a guaranteed
-     * short Regeneration buff, and 2 minutes of {@link ModEffects#BLESSED_BY_WELLSPRING} (double
-     * the raw version's own 1 minute).
+     * short Regeneration buff, edible even when full, and 5 minutes of {@link
+     * ModEffects#BLESSED_BY_WELLSPRING} stacked on top of whatever is left (see {@code
+     * WellspringBlessing#onFinishEating}).
      */
     public static final RegistryObject<Item> COOKED_MANA_WYRM = ITEMS.register("cooked_mana_wyrm",
             () -> new Item(new Item.Properties().food(new FoodProperties.Builder()
                     .nutrition(10).saturationMod(0.6f)
                     .effect(() -> new MobEffectInstance(MobEffects.REGENERATION, 200, 1), 1.0f)
-                    .effect(() -> new MobEffectInstance(ModEffects.BLESSED_BY_WELLSPRING.get(), 20 * 120, 0), 1.0f)
+                    .alwaysEat()
                     .build())));
 
     /**
@@ -114,6 +144,14 @@ public class ModItems
      */
     public static final RegistryObject<Item> BOOK_OF_THE_FAYE = ITEMS.register("book_of_the_faye",
             () -> new BlockItem(ModBlocks.BOOK_OF_THE_FAYE_BLOCK.get(), new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
+
+    /**
+     * The Art of Blood - every dark rite, bound in torn pages. Placed like the Faye's own book but
+     * rests shut: it only opens for an athame, and takes a heart each time (see {@link
+     * com.patrickma.magiccircles.block.ArtOfBloodBlock}).
+     */
+    public static final RegistryObject<Item> ART_OF_BLOOD = ITEMS.register("art_of_blood",
+            () -> new BlockItem(ModBlocks.ART_OF_BLOOD_BLOCK.get(), new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
 
     /**
      * A green powder smelted from a Living Wood Log (see data/magiccircles/recipes/thelia_dust_smelting.json)

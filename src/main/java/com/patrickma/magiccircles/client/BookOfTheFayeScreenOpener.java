@@ -27,8 +27,15 @@ public final class BookOfTheFayeScreenOpener
     {
     }
 
-    public static void open()
+    /** {@code pos} is the placed book being read, told when the screen closes so it closes for everyone. */
+    public static void open(net.minecraft.core.BlockPos pos)
     {
-        Minecraft.getInstance().setScreen(new BookOfTheFayeScreen());
+        Minecraft.getInstance().setScreen(BookOfTheFayeScreen.ofTheFaye().readingAt(pos));
+    }
+
+    /** The Art of Blood's own reading screen - same machinery, dark purple binding and torn pages. */
+    public static void openArtOfBlood(net.minecraft.core.BlockPos pos)
+    {
+        Minecraft.getInstance().setScreen(BookOfTheFayeScreen.artOfBlood().readingAt(pos));
     }
 }

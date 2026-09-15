@@ -2,8 +2,11 @@ package com.patrickma.magiccircles.limbo;
 
 import com.patrickma.magiccircles.entity.FerrymanEntity;
 import com.patrickma.magiccircles.entity.PlayerCorpseEntity;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
@@ -13,6 +16,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,6 +34,14 @@ import java.util.UUID;
 public final class LimboRegistry
 {
     static final String PET_GHOST_TAG = "MagicCirclesPetGhost";
+    /** Whether a ghost could pick things up in life - handed back exactly as it was if it returns. */
+    private static final String GHOST_COULD_LOOT_TAG = "MagicCirclesGhostCouldLoot";
+
+    /** Whether this creature is a ghost - a pet, villager or named thing waiting on the other side. */
+    public static boolean isCreatureGhost(Entity entity)
+    {
+        return entity.getPersistentData().getBoolean(PET_GHOST_TAG);
+    }
 
     private LimboRegistry()
     {
@@ -100,14 +113,38 @@ public final class LimboRegistry
             living.addEffect(GhostVisibility.invisibility());
         }
         pet.setInvulnerable(true);
+        // Never in the way of the living - they build straight through it (see VeilIntangibility).
+        pet.blocksBuilding = false;
         pet.getPersistentData().putBoolean(PET_GHOST_TAG, true);
+        if (pet instanceof net.minecraft.world.entity.Mob mob)
+        {
+            // Nothing on the other side picks up what the living drop.
+            pet.getPersistentData().putBoolean(GHOST_COULD_LOOT_TAG, mob.canPickUpLoot());
+            mob.setCanPickUpLoot(false);
+            mob.setTarget(null);
+        }
+        VeilCreatures.releaseClaims(pet);
         GhostVisibility.join(pet);
+    }
+
+    /** Brings a creature's ghost back to life where it stands - the Fairy Queen's gift to her fallen (see {@code FairyCourt}). */
+    public static void reviveCreature(Entity creature)
+    {
+        unGhostPet(creature);
     }
 
     private static void unGhostPet(Entity pet)
     {
+        // Back in its own skin, so the body it left has nothing left to mark.
+        com.patrickma.magiccircles.entity.CreatureCorpseEntity.removeFor(pet);
         pet.setInvulnerable(false);
+        pet.blocksBuilding = pet instanceof LivingEntity;
         pet.getPersistentData().remove(PET_GHOST_TAG);
+        if (pet instanceof net.minecraft.world.entity.Mob mob && pet.getPersistentData().contains(GHOST_COULD_LOOT_TAG))
+        {
+            mob.setCanPickUpLoot(pet.getPersistentData().getBoolean(GHOST_COULD_LOOT_TAG));
+            pet.getPersistentData().remove(GHOST_COULD_LOOT_TAG);
+        }
         if (pet instanceof LivingEntity living)
         {
             living.removeEffect(MobEffects.INVISIBILITY);
@@ -123,6 +160,12 @@ public final class LimboRegistry
     {
         if (!(playerRaw instanceof ServerPlayer player))
         {
+            return;
+        }
+
+        if (ferryman.isSummoned())
+        {
+            emptyTheVeil(player, ferryman);
             return;
         }
 
@@ -161,6 +204,50 @@ public final class LimboRegistry
             return true;
         }
         return false;
+    }
+
+    /**
+     * The summoned Ferryman's one and only trade, from {@code curse/SummoningRite}: whoever
+     * touches him crosses over in place of everyone else. They die on the spot - a real death,
+     * corpse and all, so they are simply the next one waiting - and in exchange every soul still
+     * behind the veil, anywhere, is pulled back into their own body at once.
+     *
+     * <p>The door opens once. When the sacrifice is complete he goes out in a breath of smoke, and
+     * the next person who needs him will have to pay for the summoning all over again.
+     */
+    private static void emptyTheVeil(ServerPlayer toucher, FerrymanEntity ferryman)
+    {
+        List<ServerPlayer> freed = new ArrayList<>();
+        for (ServerPlayer candidate : toucher.getServer().getPlayerList().getPlayers())
+        {
+            if (!candidate.getUUID().equals(toucher.getUUID()) && LimboState.isInLimbo(candidate))
+            {
+                freed.add(candidate);
+            }
+        }
+
+        for (ServerPlayer ghost : freed)
+        {
+            revive(ghost);
+            ghost.sendSystemMessage(Component.translatable("rite.magiccircles.summoning.freed",
+                    toucher.getDisplayName()));
+        }
+
+        ferryman.level().playSound(null, ferryman.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,
+                ferryman.getSoundSource(), 1.0f, 0.8f);
+        if (ferryman.level() instanceof ServerLevel level)
+        {
+            level.sendParticles(ParticleTypes.SOUL, ferryman.getX(), ferryman.getY() + 1.0, ferryman.getZ(),
+                    80, 0.8, 1.0, 0.8, 0.05);
+        }
+
+        // Paid last, so the toucher's own death creates its corpse after everyone else is already
+        // out - otherwise they would be freed by the very trade they are paying for.
+        toucher.hurt(toucher.damageSources().magic(), Float.MAX_VALUE);
+
+        // The price is paid; the door closes. SummoningRite hears him go and releases his summoner
+        // from the one-Ferryman rule, so the glimpses can find them again.
+        ferryman.vanishInSmoke();
     }
 
     /** An ordinary death's ghost being ferried back: body reclaimed, everything in it returned. */
@@ -272,6 +359,7 @@ public final class LimboRegistry
      */
     public static void onGhostTimedOut(ServerPlayer player)
     {
+        DeathLimboManager.announce(player, DeathLimboManager.rebornMessage(player));
         PlayerCorpseEntity corpse = findCorpse(player);
         if (corpse != null)
         {

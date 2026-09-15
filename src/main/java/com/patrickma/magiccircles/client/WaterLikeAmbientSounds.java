@@ -2,12 +2,12 @@ package com.patrickma.magiccircles.client;
 
 import com.patrickma.magiccircles.MagicCircles;
 import com.patrickma.magiccircles.block.WaterLikeFluidSounds;
+import com.patrickma.magiccircles.registry.ModSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
@@ -68,43 +68,50 @@ public final class WaterLikeAmbientSounds
             return;
         }
 
+        // Each water has its own world under the surface - see ModSounds.FluidVoice.
         FluidType found = findEyeFluid(player);
-        if (found != null && found != currentFluid)
+        ModSounds.FluidVoice voice = found != null ? ModSounds.voiceOf(found) : null;
+        if (found != null && found != currentFluid && voice != null)
         {
             mc.level.playLocalSound(player.getX(), player.getY(), player.getZ(),
-                    SoundEvents.AMBIENT_UNDERWATER_ENTER, SoundSource.AMBIENT, 1.0F, 1.0F, false);
-            mc.getSoundManager().play(new LoopSound(player, found));
+                    voice.submerge().get(), SoundSource.AMBIENT, 0.8F, 1.0F, false);
+            mc.getSoundManager().play(new LoopSound(player, found, voice.loop().get()));
         }
         else if (found == null && currentFluid != null)
         {
-            mc.level.playLocalSound(player.getX(), player.getY(), player.getZ(),
-                    SoundEvents.AMBIENT_UNDERWATER_EXIT, SoundSource.AMBIENT, 1.0F, 1.0F, false);
+            ModSounds.FluidVoice leftVoice = ModSounds.voiceOf(currentFluid);
+            if (leftVoice != null)
+            {
+                mc.level.playLocalSound(player.getX(), player.getY(), player.getZ(),
+                        leftVoice.surface().get(), SoundSource.AMBIENT, 0.8F, 1.0F, false);
+            }
         }
         currentFluid = found;
 
-        if (found == null)
+        if (found == null || voice == null)
         {
             return;
         }
+        // Something drifting past, now and then - rarer, and quieter, the rarer the roll.
         float roll = player.level().random.nextFloat();
-        SoundEvent addition;
+        float volume;
         if (roll < ADDITION_ULTRA_RARE_CHANCE)
         {
-            addition = SoundEvents.AMBIENT_UNDERWATER_LOOP_ADDITIONS_ULTRA_RARE;
+            volume = 1.0F;
         }
         else if (roll < ADDITION_RARE_CHANCE)
         {
-            addition = SoundEvents.AMBIENT_UNDERWATER_LOOP_ADDITIONS_RARE;
+            volume = 0.7F;
         }
         else if (roll < ADDITION_CHANCE)
         {
-            addition = SoundEvents.AMBIENT_UNDERWATER_LOOP_ADDITIONS;
+            volume = 0.4F;
         }
         else
         {
             return;
         }
-        mc.getSoundManager().play(new SubSound(player, found, addition));
+        mc.getSoundManager().play(new SubSound(player, found, voice.addition().get(), volume));
     }
 
     /** The first of {@link WaterLikeFluidSounds#WATER_LIKE_FLUID_TYPES} the player's eyes are currently in, or {@code null}. */
@@ -129,9 +136,9 @@ public final class WaterLikeAmbientSounds
         private final FluidType fluidType;
         private int fade;
 
-        LoopSound(LocalPlayer player, FluidType fluidType)
+        LoopSound(LocalPlayer player, FluidType fluidType, SoundEvent loop)
         {
-            super(SoundEvents.AMBIENT_UNDERWATER_LOOP, SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
+            super(loop, SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
             this.player = player;
             this.fluidType = fluidType;
             this.looping = true;
@@ -167,14 +174,14 @@ public final class WaterLikeAmbientSounds
         private final LocalPlayer player;
         private final FluidType fluidType;
 
-        SubSound(LocalPlayer player, FluidType fluidType, SoundEvent sound)
+        SubSound(LocalPlayer player, FluidType fluidType, SoundEvent sound, float volume)
         {
             super(sound, SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
             this.player = player;
             this.fluidType = fluidType;
             this.looping = false;
             this.delay = 0;
-            this.volume = 1.0F;
+            this.volume = volume;
             this.relative = true;
         }
 

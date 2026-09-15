@@ -1,6 +1,12 @@
 package com.patrickma.magiccircles.worldgen;
 
+import com.mojang.logging.LogUtils;
+import com.patrickma.magiccircles.FairyPortalManager;
 import com.patrickma.magiccircles.MagicCircles;
+import com.patrickma.magiccircles.block.MagicCircleBlock;
+import com.patrickma.magiccircles.block.RuneColor;
+import com.patrickma.magiccircles.block.entity.HeartCoreBlockEntity;
+import com.patrickma.magiccircles.item.HeartstoneItem;
 import com.patrickma.magiccircles.registry.ModBlocks;
 import com.patrickma.magiccircles.registry.ModDimensions;
 import net.minecraft.core.BlockPos;
@@ -137,6 +143,7 @@ public final class FairyPortalRuins
             // WorldTree#placeIfNeeded's own doc comment for why this matters here.
             WorldTree.placeIfNeeded(fairyRealm);
             placeIfNeeded(fairyRealm);
+            placeCrossingIfNeeded(fairyRealm);
         }
     }
 
@@ -431,6 +438,75 @@ public final class FairyPortalRuins
         }
     }
 
+    /**
+     * Zuzo's Crossing, waiting on the pedestal for whoever is stranded here: blue and gold runes round a
+     * Heart Core already full of mana, over a pit of water - everything but the redstone at the four
+     * corners. Lay the redstone, touch a Fairy Horn to the heart, and the Crossing - sung from inside
+     * the realm - opens the way home (see {@code FairyPortalManager#openWaterPortal}). Laid once per
+     * world, on new worlds and existing ones alike ({@link RuinsSavedData#crossingPlaced}); redstone
+     * someone has already put at a corner is left where it is.
+     */
+    private static void placeCrossingIfNeeded(ServerLevel level)
+    {
+        RuinsSavedData saved = level.getDataStorage().computeIfAbsent(RuinsSavedData::load, RuinsSavedData::new, "magiccircles_portal_ruins");
+        if (!saved.placed || saved.crossingPlaced)
+        {
+            return;
+        }
+        BlockPos center = portalCenter();
+        level.getChunk(center.getX() >> 4, center.getZ() >> 4);
+        for (int dx = -2; dx <= 2; dx++)
+        {
+            for (int dz = -2; dz <= 2; dz++)
+            {
+                BlockPos pos = center.offset(dx, 0, dz);
+                boolean corner = Math.abs(dx) == 2 && Math.abs(dz) == 2;
+                boolean inner = Math.abs(dx) <= 1 && Math.abs(dz) <= 1;
+                if (dx == 0 && dz == 0)
+                {
+                    continue;
+                }
+                if (inner)
+                {
+                    level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+                }
+                else if (corner)
+                {
+                    if (!level.getBlockState(pos).is(Blocks.REDSTONE_WIRE))
+                    {
+                        level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+                    }
+                }
+                else
+                {
+                    // PortalRitual's own pattern: gold at the middle of the near and far edges, blue
+                    // either side of it; blue at the middle of the two side edges, gold either side.
+                    RuneColor color = Math.abs(dz) == 2 ? (dx == 0 ? RuneColor.GOLD : RuneColor.BLUE)
+                            : (dz == 0 ? RuneColor.BLUE : RuneColor.GOLD);
+                    level.setBlock(pos, ModBlocks.MAGIC_CIRCLE.get().defaultBlockState()
+                            .setValue(MagicCircleBlock.VARIANT, level.random.nextInt(MagicCircleBlock.VARIANT_COUNT))
+                            .setValue(MagicCircleBlock.COLOR, color), 2);
+                }
+            }
+        }
+
+        level.setBlockAndUpdate(center, ModBlocks.HEART_CORE.get().defaultBlockState());
+        if (level.getBlockEntity(center) instanceof HeartCoreBlockEntity heart)
+        {
+            heart.setMana(HeartstoneItem.MAX_MANA);
+            heart.setCenterColor(RuneColor.BLUE);
+        }
+        if (level.getBlockState(center.above()).isAir())
+        {
+            level.setBlockAndUpdate(center.above(), ModBlocks.HEART_CORE_TOP.get().defaultBlockState());
+        }
+        FairyPortalManager.fillWaterPit(level, center);
+
+        saved.crossingPlaced = true;
+        saved.setDirty();
+        LogUtils.getLogger().info("Laid the waiting Crossing in the portal ruins at {} - a full heart, and no redstone.", center);
+    }
+
     /** A small raised dais at the chamber's dead center - {@link #portalCenter()} sits exactly one block above its top, so the portal itself reads as standing on a pedestal rather than flush with the surrounding floor. */
     private static void buildPedestal(ServerLevel level, int cx, int cz, int floorY)
     {
@@ -666,6 +742,8 @@ public final class FairyPortalRuins
     public static final class RuinsSavedData extends SavedData
     {
         private boolean placed;
+        /** Whether the waiting Crossing has been laid on the pedestal - see {@link #placeCrossingIfNeeded}. */
+        private boolean crossingPlaced;
 
         public RuinsSavedData()
         {
@@ -675,6 +753,7 @@ public final class FairyPortalRuins
         {
             RuinsSavedData data = new RuinsSavedData();
             data.placed = tag.getBoolean("Placed");
+            data.crossingPlaced = tag.getBoolean("CrossingPlaced");
             return data;
         }
 
@@ -682,6 +761,7 @@ public final class FairyPortalRuins
         public CompoundTag save(CompoundTag tag)
         {
             tag.putBoolean("Placed", placed);
+            tag.putBoolean("CrossingPlaced", crossingPlaced);
             return tag;
         }
     }

@@ -33,11 +33,25 @@ public class ModCreativeTabs
                         output.accept(ModItems.LOST_WAYSTONE.get());
                         output.accept(ModItems.LIVING_WOOD_LOG.get());
                         output.accept(ModItems.LIVING_WOOD_LEAVES.get());
+                        output.accept(ModItems.STRIPPED_LIVING_WOOD_LOG.get());
+                        output.accept(ModItems.LIVING_WOOD.get());
+                        output.accept(ModItems.STRIPPED_LIVING_WOOD.get());
+                        output.accept(ModItems.LIVING_WOOD_PLANKS.get());
+                        output.accept(ModItems.LIVING_WOOD_STAIRS.get());
+                        output.accept(ModItems.LIVING_WOOD_SLAB.get());
+                        output.accept(ModItems.LIVING_WOOD_FENCE.get());
+                        output.accept(ModItems.LIVING_WOOD_FENCE_GATE.get());
+                        output.accept(ModItems.LIVING_WOOD_DOOR.get());
+                        output.accept(ModItems.LIVING_WOOD_TRAPDOOR.get());
+                        output.accept(ModItems.LIVING_WOOD_BUTTON.get());
+                        output.accept(ModItems.LIVING_WOOD_PRESSURE_PLATE.get());
                         output.accept(ModItems.PIXIE_SPAWN_EGG.get());
                         output.accept(ModItems.DREAM_ELK_SPAWN_EGG.get());
+                        output.accept(ModItems.FAIRY_SPAWN_EGG.get());
                         output.accept(ModItems.RAW_MANA_WYRM.get());
                         output.accept(ModItems.COOKED_MANA_WYRM.get());
                         output.accept(ModItems.BOOK_OF_THE_FAYE.get());
+                        output.accept(ModItems.ART_OF_BLOOD.get());
                     })
                     .build());
 }

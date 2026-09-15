@@ -23,13 +23,50 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = MagicCircles.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class WellspringBlessing
 {
-    /** Ticks of blessing granted per tick spent swimming, so roughly four seconds gained per one spent. */
-    private static final int RECHARGE_TICKS_PER_TICK = 4;
-    /** Ceiling on the stored duration, so a long swim can't bank an effectively permanent blessing. */
-    private static final int RECHARGE_CAP_TICKS = 20 * 60 * 5;
+    /** Ticks of blessing granted per tick spent swimming, so roughly eight seconds gained per one spent. */
+    private static final int RECHARGE_TICKS_PER_TICK = 8;
+    /**
+     * Ceiling on the stored duration, so a long swim can't bank an effectively permanent blessing:
+     * forty minutes - two full days and nights, "two moons" in the Book of the Faye.
+     */
+    private static final int RECHARGE_CAP_TICKS = 20 * 60 * 40;
+
+    /** Ticks of Blessing a raw and a cooked Mana Wyrm add - on top of whatever is left, up to the same ceiling. */
+    private static final int RAW_WYRM_TICKS = 20 * 60;
+    private static final int COOKED_WYRM_TICKS = 20 * 60 * 5;
 
     private WellspringBlessing()
     {
+    }
+
+    /**
+     * Eating a Mana Wyrm: its Blessing is added to whatever is left rather than replacing it, up to
+     * the same two-moon ceiling the Wellspring tops up to. Neither wyrm carries the Blessing as an
+     * ordinary food effect for exactly that reason - vanilla only ever swaps a shorter effect for a
+     * longer one, and never adds two together.
+     */
+    @SubscribeEvent
+    public static void onFinishEating(net.minecraftforge.event.entity.living.LivingEntityUseItemEvent.Finish event)
+    {
+        net.minecraft.world.entity.LivingEntity eater = event.getEntity();
+        if (eater.level().isClientSide)
+        {
+            return;
+        }
+        net.minecraft.world.item.ItemStack eaten = event.getItem();
+        int gain = eaten.is(com.patrickma.magiccircles.registry.ModItems.COOKED_MANA_WYRM.get()) ? COOKED_WYRM_TICKS
+                : eaten.is(com.patrickma.magiccircles.registry.ModItems.RAW_MANA_WYRM.get()) ? RAW_WYRM_TICKS : 0;
+        if (gain == 0)
+        {
+            return;
+        }
+        MobEffectInstance current = eater.getEffect(ModEffects.BLESSED_BY_WELLSPRING.get());
+        int left = current == null ? 0 : current.getDuration();
+        int total = Math.min(RECHARGE_CAP_TICKS, left + gain);
+        if (total > left)
+        {
+            eater.addEffect(new MobEffectInstance(ModEffects.BLESSED_BY_WELLSPRING.get(), total, 0));
+        }
     }
 
     @SubscribeEvent

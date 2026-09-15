@@ -148,7 +148,12 @@ public class FairyRealmChunkGenerator extends ChunkGenerator
     // got more noticeable, not less, once other terrain changes left less incidental mountain
     // camouflage right around the tree - a real bug this fixes properly rather than only masking
     // it with a bigger fixed number).
-    private static final double FLAT_RADIUS_MARGIN = 10.0;
+    // Trimmed from 10 to bring the treeline (and the hills) in closer to the World Tree. The
+    // margin exists so the tree's square footprint - corners included - never pokes out of the
+    // flat disc into bumpy ground; six blocks past the corner reach still covers that, and the
+    // much gentler hills this now melts into make a near miss far less visible than it was at the
+    // old amplitude.
+    private static final double FLAT_RADIUS_MARGIN = 6.0;
     private static int cachedFlatRadius = -1;
 
     /** The World Tree's own mandatory-flat disc radius - see {@code FairyLandmarkExclusionFilter}, which keeps trees from spawning within 5 blocks of this. Sized dynamically off the tree's own real structure bounds (see this field's own doc comment) rather than a fixed guess, so it always fully contains the tree's square footprint - corners included - regardless of the source structure's own actual size. */
@@ -181,12 +186,27 @@ public class FairyRealmChunkGenerator extends ChunkGenerator
     private static final double ENTRANCE_HALF_ANGLE_DEG = 35.0;
     private static final double ENTRANCE_ANGLE_TAPER_DEG = 20.0;
 
-    private static final double MOUNTAIN_AMPLITUDE = 115.0;
-    private static final double MOUNTAIN_NOISE_SCALE = 1.0 / 170.0;
+    // Rolling hills rather than cliffs. Three things were making the old terrain jagged and
+    // genuinely unpleasant to walk: a 115-block amplitude packed into a ~170-block wavelength
+    // (so the ground could climb most of a hundred blocks within a short horizontal run), and
+    // four noise octaves, whose top two contribute nothing but small high-frequency steps on top
+    // of that. Far less height, spread over a much longer wavelength, with those fine octaves
+    // dropped - see MOUNTAIN_OCTAVES.
+    private static final double MOUNTAIN_AMPLITUDE = 42.0;
+    private static final double MOUNTAIN_NOISE_SCALE = 1.0 / 300.0;
     // Normalized noise (0-1) raised to this power before scaling by MOUNTAIN_AMPLITUDE - above 1,
     // this biases most of the terrain toward the lower end (rolling hills) with real peaks only
-    // where the noise is already strongly positive, rather than bumps distributed evenly.
-    private static final double MOUNTAIN_SHAPE_POWER = 1.7;
+    // where the noise is already strongly positive, rather than bumps distributed evenly. Eased
+    // back from 1.7 now that the amplitude is so much smaller: the steep curve existed to keep a
+    // huge amplitude from applying everywhere, which is no longer the problem it was solving.
+    private static final double MOUNTAIN_SHAPE_POWER = 1.45;
+    /**
+     * Which noise octaves the mountain field is built from. Two, not four - the third and fourth
+     * are high-frequency detail, and at this amplitude they read as jagged little ledges rather
+     * than texture. Shared so {@link #ensureTerrainReady} and {@link #searchForMountainSeed} can
+     * never build different noise from the same seed and disagree about what the terrain is.
+     */
+    private static final List<Integer> MOUNTAIN_OCTAVES = List.of(1, 2);
 
     // The river system: traces the RIVER_CENTER *contour line* of a dedicated noise field
     // (riverNoise) - the set of points where the noise value is close to RIVER_CENTER - rather
@@ -245,10 +265,12 @@ public class FairyRealmChunkGenerator extends ChunkGenerator
     private static final double UNDERSIDE_NOISE_AMPLITUDE = 8.0;
     private static final double UNDERSIDE_NOISE_SCALE = 1.0 / 90.0;
 
-    // "Fairly tall mountains" for the purposes of #searchForMountainSeed - blocks above
-    // FLAT_TOP_Y a column needs to reach somewhere on the island before a candidate seed is
-    // accepted.
-    private static final int MOUNTAIN_HEIGHT_THRESHOLD = 85;
+    // "A real high point" for the purposes of #searchForMountainSeed - blocks above FLAT_TOP_Y a
+    // column needs to reach somewhere on the island before a candidate seed is accepted. Must stay
+    // comfortably under MOUNTAIN_AMPLITUDE: no seed can ever exceed that, so a threshold above it
+    // would silently fail all SEED_SEARCH_MAX_ATTEMPTS tries every single time and fall through to
+    // the last candidate regardless. Scaled down with the amplitude (was 85, against 115).
+    private static final int MOUNTAIN_HEIGHT_THRESHOLD = 26;
     private static final int SEED_SEARCH_MAX_ATTEMPTS = 200;
     private static final int SEED_SEARCH_GRID_STEP = 20;
 
@@ -294,7 +316,7 @@ public class FairyRealmChunkGenerator extends ChunkGenerator
             saved.setDirty();
             LOGGER.info("Fairy Realm terrain: recorded new seed {}", seed);
         }
-        mountainNoise = new PerlinSimplexNoise(RandomSource.create(seed), List.of(1, 2, 3, 4));
+        mountainNoise = new PerlinSimplexNoise(RandomSource.create(seed), MOUNTAIN_OCTAVES);
         undersideNoise = new PerlinSimplexNoise(RandomSource.create(seed + 1), List.of(1, 2));
         streamNoise = new PerlinSimplexNoise(RandomSource.create(seed + 2), List.of(1, 2));
     }
@@ -317,7 +339,7 @@ public class FairyRealmChunkGenerator extends ChunkGenerator
         for (int attempt = 1; attempt <= SEED_SEARCH_MAX_ATTEMPTS; attempt++)
         {
             long candidate = searchRandom.nextLong();
-            PerlinSimplexNoise candidateMountain = new PerlinSimplexNoise(RandomSource.create(candidate), List.of(1, 2, 3, 4));
+            PerlinSimplexNoise candidateMountain = new PerlinSimplexNoise(RandomSource.create(candidate), MOUNTAIN_OCTAVES);
             // seed+2 - the exact same offset #ensureTerrainReady uses for streamNoise (the river
             // field), so this checks the actual noise the chosen seed will really generate with.
             PerlinSimplexNoise candidateRiver = new PerlinSimplexNoise(RandomSource.create(candidate + 2), List.of(1, 2));

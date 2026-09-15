@@ -182,6 +182,111 @@ public final class FairyRealmShield
         return new Vec3(nx * RADIUS_H, CENTER_Y + ny * RADIUS_V, nz * RADIUS_H);
     }
 
+    // ------------------------------------------------------------------
+    // Striking the boundary
+    // ------------------------------------------------------------------
+
+    /** Generous next to the client's own reach, so lag never makes a real strike miss - see {@link #strikeFrom}. */
+    private static final double SERVER_STRIKE_REACH = 6.0;
+    /** A punch's pace - holding the button down doesn't turn the boundary into a strobe. */
+    private static final int STRIKE_COOLDOWN_TICKS = 4;
+    private static final Map<UUID, Long> lastStrike = new HashMap<>();
+
+    /**
+     * Where the straight line from {@code from} to {@code to} first meets the boundary, or {@code
+     * null} if it never does. Scaling each axis by its own radius turns the ellipsoid into a unit
+     * sphere, where this is an ordinary line-sphere intersection - the nearer of the two crossings
+     * that falls within the segment. Pure maths on constants, so the client can ask it too.
+     */
+    public static Vec3 firstCrossing(Vec3 from, Vec3 to)
+    {
+        double px = from.x / RADIUS_H;
+        double py = (from.y - CENTER_Y) / RADIUS_V;
+        double pz = from.z / RADIUS_H;
+        double dx = (to.x - from.x) / RADIUS_H;
+        double dy = (to.y - from.y) / RADIUS_V;
+        double dz = (to.z - from.z) / RADIUS_H;
+
+        double a = dx * dx + dy * dy + dz * dz;
+        if (a < 1.0E-12)
+        {
+            return null;
+        }
+        double b = 2.0 * (px * dx + py * dy + pz * dz);
+        double c = px * px + py * py + pz * pz - 1.0;
+        double discriminant = b * b - 4.0 * a * c;
+        if (discriminant < 0.0)
+        {
+            return null;
+        }
+        double root = Math.sqrt(discriminant);
+        double near = (-b - root) / (2.0 * a);
+        double far = (-b + root) / (2.0 * a);
+        double t = near >= 0.0 && near <= 1.0 ? near : far >= 0.0 && far <= 1.0 ? far : -1.0;
+        return t < 0.0 ? null : from.add(to.subtract(from).scale(t));
+    }
+
+    /** The boundary struck at {@code point}: the flash and its ripple, and a clear ring to go with them. */
+    public static void strike(ServerLevel level, Vec3 point)
+    {
+        onBoundaryCrossed(level, point);
+        level.playSound(null, point.x, point.y, point.z, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_HIT,
+                net.minecraft.sounds.SoundSource.BLOCKS, 1.5f, 0.6f);
+    }
+
+    /**
+     * A player swinging at the boundary - from {@code network/RealmShieldStrikePacket}. The client
+     * only says that it happened; where is worked out again here from the player's own eye and look,
+     * so nobody can make the boundary flare somewhere they aren't.
+     */
+    public static void strikeFrom(net.minecraft.server.level.ServerPlayer player)
+    {
+        if (!(player.level() instanceof ServerLevel level) || level.dimension() != ModDimensions.FAIRY_REALM)
+        {
+            return;
+        }
+        long now = level.getGameTime();
+        Long last = lastStrike.get(player.getUUID());
+        if (last != null && now - last < STRIKE_COOLDOWN_TICKS)
+        {
+            return;
+        }
+        Vec3 eye = player.getEyePosition();
+        Vec3 hit = firstCrossing(eye, eye.add(player.getViewVector(1.0f).scale(SERVER_STRIKE_REACH)));
+        if (hit == null)
+        {
+            return;
+        }
+        lastStrike.put(player.getUUID(), now);
+        strike(level, hit);
+    }
+
+    /**
+     * Nothing is hit through the boundary, in either direction: a blow between someone on one side
+     * and something on the other lands on the boundary instead, and it ripples where it did.
+     */
+    @SubscribeEvent
+    public static void onAttackAcross(net.minecraftforge.event.entity.player.AttackEntityEvent event)
+    {
+        if (!(event.getEntity().level() instanceof ServerLevel level) || level.dimension() != ModDimensions.FAIRY_REALM)
+        {
+            return;
+        }
+        Vec3 hit = firstCrossing(event.getEntity().getEyePosition(), event.getTarget().getBoundingBox().getCenter());
+        if (hit != null)
+        {
+            event.setCanceled(true);
+            strike(level, hit);
+        }
+    }
+
+    /** Nothing here belongs to the next world a singleplayer game opens. */
+    @SubscribeEvent
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event)
+    {
+        lastStrike.clear();
+    }
+
     /**
      * Explosions that go off *outside* the boundary (a creeper or TNT that wandered/was placed
      * past the shield, or in the void beyond it) never affect anything inside it - blocks and

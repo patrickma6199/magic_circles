@@ -38,6 +38,28 @@ public class ModEntities
                     .clientTrackingRange(10)
                     .build("pixie"));
 
+    /** The Faye themselves - see {@link com.patrickma.magiccircles.entity.FairyEntity}. Player-sized, since they wear the player's own model. */
+    public static final RegistryObject<EntityType<com.patrickma.magiccircles.entity.FairyEntity>> FAIRY = ENTITY_TYPES.register("fairy",
+            () -> EntityType.Builder.<com.patrickma.magiccircles.entity.FairyEntity>of(com.patrickma.magiccircles.entity.FairyEntity::new, MobCategory.CREATURE)
+                    .sized(0.6f, 1.8f)
+                    .clientTrackingRange(10)
+                    .build("fairy"));
+
+    /** The Fairy Queen - see {@link com.patrickma.magiccircles.entity.FairyQueenEntity}. A head taller than her people. */
+    public static final RegistryObject<EntityType<com.patrickma.magiccircles.entity.FairyQueenEntity>> FAIRY_QUEEN = ENTITY_TYPES.register("fairy_queen",
+            () -> EntityType.Builder.<com.patrickma.magiccircles.entity.FairyQueenEntity>of(com.patrickma.magiccircles.entity.FairyQueenEntity::new, MobCategory.CREATURE)
+                    .sized(0.7f, 2.07f)
+                    .clientTrackingRange(10)
+                    .build("fairy_queen"));
+
+    /** One wisp of a fairy's volley - see {@link com.patrickma.magiccircles.entity.WispMissileEntity}. Updated every tick, since it turns. */
+    public static final RegistryObject<EntityType<com.patrickma.magiccircles.entity.WispMissileEntity>> WISP_MISSILE = ENTITY_TYPES.register("wisp_missile",
+            () -> EntityType.Builder.<com.patrickma.magiccircles.entity.WispMissileEntity>of(com.patrickma.magiccircles.entity.WispMissileEntity::new, MobCategory.MISC)
+                    .sized(0.3f, 0.3f)
+                    .clientTrackingRange(6)
+                    .updateInterval(1)
+                    .build("wisp_missile"));
+
     /** A Wellspring-dwelling fish - see {@link ManaWyrmEntity}. Sized like vanilla's own Salmon, whose model this reuses. */
     public static final RegistryObject<EntityType<ManaWyrmEntity>> MANA_WYRM = ENTITY_TYPES.register("mana_wyrm",
             () -> EntityType.Builder.<ManaWyrmEntity>of(ManaWyrmEntity::new, MobCategory.WATER_AMBIENT)
@@ -73,6 +95,15 @@ public class ModEntities
                     .sized(0.8f, 0.45f)
                     .clientTrackingRange(10)
                     .build("player_corpse"));
+
+    /** A pet, villager or named creature's body, left where it fell when it crossed over - see {@code entity/CreatureCorpseEntity}. */
+    public static final RegistryObject<EntityType<com.patrickma.magiccircles.entity.CreatureCorpseEntity>> CREATURE_CORPSE =
+            ENTITY_TYPES.register("creature_corpse",
+                    () -> EntityType.Builder.<com.patrickma.magiccircles.entity.CreatureCorpseEntity>of(
+                                    com.patrickma.magiccircles.entity.CreatureCorpseEntity::new, MobCategory.MISC)
+                            .sized(0.8f, 0.45f)
+                            .clientTrackingRange(10)
+                            .build("creature_corpse"));
 
     /** A phantom locked onto one specific victim - see {@link GhostPhantomEntity}. Same footprint as vanilla's own Phantom. */
     public static final RegistryObject<EntityType<GhostPhantomEntity>> GHOST_PHANTOM = ENTITY_TYPES.register("ghost_phantom",

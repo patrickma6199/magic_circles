@@ -51,8 +51,14 @@ public final class GhostVisibility
         {
             return;
         }
+        boolean joining = !isOnVeilTeam(entity);
         Scoreboard scoreboard = level.getScoreboard();
         scoreboard.addPlayerToTeam(entity.getScoreboardName(), getOrCreateTeam(scoreboard));
+        if (joining)
+        {
+            // Crossing over: everyone already watching has to be asked again whether they still can.
+            VeilTracking.refreshSoon(entity);
+        }
     }
 
     public static void leave(Entity entity)
@@ -61,12 +67,33 @@ public final class GhostVisibility
         {
             return;
         }
-        level.getScoreboard().removePlayerFromTeam(entity.getScoreboardName());
+        if (level.getScoreboard().removePlayerFromTeam(entity.getScoreboardName()))
+        {
+            VeilTracking.refreshSoon(entity);
+        }
+    }
+
+    public static boolean isOnVeilTeam(Entity entity)
+    {
+        return entity.getTeam() != null && TEAM_NAME.equals(entity.getTeam().getName());
+    }
+
+    /**
+     * Whether this entity is behind the veil, judged only from what every client is already told:
+     * everything over there is both invisible and on the veil team. Deathsight puts the living on
+     * the team too, but never makes them invisible, so they still count as this side.
+     */
+    public static boolean appearsBehindVeil(Entity entity)
+    {
+        return entity.isInvisible() && isOnVeilTeam(entity);
     }
 
     /** Permanent, silent - see this class's own doc comment for why both flags are off. */
     public static MobEffectInstance invisibility()
     {
-        return new MobEffectInstance(MobEffects.INVISIBILITY, Integer.MAX_VALUE, 0, false, false, false);
+        MobEffectInstance invisibility = new MobEffectInstance(MobEffects.INVISIBILITY, Integer.MAX_VALUE, 0, false, false, false);
+        // Being dead is not something milk cures.
+        invisibility.setCurativeItems(new java.util.ArrayList<>());
+        return invisibility;
     }
 }

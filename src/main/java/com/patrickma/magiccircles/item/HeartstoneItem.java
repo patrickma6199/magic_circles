@@ -99,11 +99,11 @@ public class HeartstoneItem extends Item
      * Heartstone. Set by absorbing a working Heart Core's ring (see {@code HeartCoreBlock#interact}'s
      * empty-hand branch, gated on {@link ModEffects#BLESSED_BY_WELLSPRING}); cleared only by the
      * Cleansing Ritual (see {@link #performCleansingRitual}). A commanded stone can still be
-     * "charged" - spent on {@link #useOn} to power a brand new Heart Core, same as any blank
-     * stone - since that action only ever cares about the stone's raw mana, never this tag (a
-     * Heart Core's own spell always comes from its ring's color composition, not from anything
-     * carried over from whatever stone happened to fund it). Casting the commanded spell itself
-     * and the Cleansing Ritual are the only two actions this tag *does* gate.
+     * "charged" - set into a ring as a Heart Core, same as any blank stone. The heart keeps the
+     * commission for it ({@code HeartCoreBlockEntity#carriedSpell}) and hands it back when the stone
+     * is taken up again, whatever ring it rested in - a Heart Core's own spells always come from
+     * its ring's colours, never from the commission it is keeping. Casting the commanded spell
+     * itself and the Cleansing Ritual are the only two actions this tag *does* gate.
      */
     @Nullable
     public static HeartSpell getCommandedSpell(ItemStack stack)
@@ -221,6 +221,7 @@ public class HeartstoneItem extends Item
         {
             heart.setMana(mana);
             heart.setCenterColor(color);
+            heart.setCarriedSpell(getCommandedSpell(stack));
         }
 
         BlockPos topPos = center.above();
@@ -296,13 +297,24 @@ public class HeartstoneItem extends Item
             return InteractionResultHolder.success(stack);
         }
 
+        // Right-clicking again while a lasting spell from this stone still runs ends it instead.
+        if (spell.isProlonged() && CommandedSpellCasting.cancelActive(player.getUUID(), spell))
+        {
+            player.displayClientMessage(Component.translatable("item.magiccircles.heartstone.dispelled")
+                    .withStyle(ChatFormatting.AQUA), true);
+            return InteractionResultHolder.success(stack);
+        }
+
         int mana = getMana(stack);
-        if (mana < spell.manaCost())
+        // A Shield costs nothing to raise - only what it turns aside, a mana for every point of harm
+        // (see FairyWard). Still, a stone with nothing left in it raises nothing.
+        int cost = spell == HeartSpell.SHIELD ? 0 : spell.manaCost();
+        if (mana < Math.max(1, cost))
         {
             player.displayClientMessage(Component.translatable("block.magiccircles.heart_core.not_enough_mana").withStyle(ChatFormatting.RED), true);
             return InteractionResultHolder.fail(stack);
         }
-        setMana(stack, mana - spell.manaCost());
+        setMana(stack, mana - cost);
         CommandedSpellCasting.cast((ServerLevel) level, player, spell);
         return InteractionResultHolder.success(stack);
     }

@@ -86,7 +86,7 @@ public final class GhostRules
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event)
     {
-        if (isDead(event.getEntity()) && !(event.getTarget() instanceof FerrymanEntity))
+        if (isDead(event.getEntity()) && !(event.getTarget() instanceof FerrymanEntity || event.getTarget() instanceof com.patrickma.magiccircles.entity.FairyQueenEntity))
         {
             event.setCanceled(true);
         }
@@ -95,7 +95,7 @@ public final class GhostRules
     @SubscribeEvent
     public static void onEntityInteractSpecific(PlayerInteractEvent.EntityInteractSpecific event)
     {
-        if (isDead(event.getEntity()) && !(event.getTarget() instanceof FerrymanEntity))
+        if (isDead(event.getEntity()) && !(event.getTarget() instanceof FerrymanEntity || event.getTarget() instanceof com.patrickma.magiccircles.entity.FairyQueenEntity))
         {
             event.setCanceled(true);
         }

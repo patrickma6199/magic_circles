@@ -132,6 +132,8 @@ public final class WorldTree
             // Must run before the getChunk calls below - see FairyRealmChunkGenerator#ensureTerrainReady.
             FairyRealmChunkGenerator.ensureTerrainReady(fairyRealm);
             placeIfNeeded(fairyRealm);
+            // The Fairy Court, hollowed out of the heartwood - after the tree, on new and old worlds alike.
+            FairyThroneRoom.carveIfNeeded(fairyRealm);
         }
     }
 
@@ -231,6 +233,8 @@ public final class WorldTree
         spawnAncientHeartstone(fairyRealm);
         spawnPixies(fairyRealm);
         spawnDreamElks(fairyRealm);
+        spawnFairies(fairyRealm);
+        com.patrickma.magiccircles.FairyCourt.ensureQueen(fairyRealm);
 
         saved.placed = true;
         saved.setDirty();
@@ -419,7 +423,7 @@ public final class WorldTree
     // practice). A real, direct placement is the only way to be *certain* the realm never starts
     // pixie-less, regardless of whatever spawn-cap/density/heightmap factors might otherwise
     // suppress natural spawns entirely.
-    private static final int PIXIE_POPULATION = 60;
+    private static final int PIXIE_POPULATION = 20;
 
     private static void spawnPixies(ServerLevel level)
     {
@@ -497,13 +501,63 @@ public final class WorldTree
         return level.getBlockState(feet).isAir() && level.getBlockState(feet.above()).isAir();
     }
 
+    /**
+     * Puts the tree back exactly as it was first placed, within a box: every block the structure
+     * has there, and air wherever it has none. How the Fairy Court's first, smaller room high in
+     * the trunk is filled back in now that the court sits lower (see {@code FairyThroneRoom}).
+     * The chunks must already be loaded.
+     */
+    public static void restoreOriginal(ServerLevel level, BlockPos min, BlockPos max)
+    {
+        ensureLoaded();
+        Map<BlockPos, BlockState> original = cachedBlocks;
+        BlockState air = Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (int x = min.getX(); x <= max.getX(); x++)
+        {
+            for (int y = min.getY(); y <= max.getY(); y++)
+            {
+                for (int z = min.getZ(); z <= max.getZ(); z++)
+                {
+                    cursor.set(x, y, z);
+                    level.setBlock(cursor, original.getOrDefault(cursor, air), Block.UPDATE_CLIENTS);
+                }
+            }
+        }
+    }
+
+    /**
+     * A random pocket of open air among the tree's own branches - inside its reach, between the
+     * ground and the top of the canopy - or null if none turned up in {@code attempts} tries. Where
+     * fairies live (see {@code entity/FairyEntity} and {@code FairyPopulationMaintainer}).
+     */
+    public static BlockPos randomOpenAirInTree(ServerLevel level, net.minecraft.util.RandomSource random, int attempts)
+    {
+        int radius = Math.max(4, (int) (maxRadius() * 0.9));
+        int minY = groundY() + 2;
+        int maxY = Math.max(minY + 1, topY() - 2);
+        for (int attempt = 0; attempt < attempts; attempt++)
+        {
+            double angle = random.nextDouble() * 2.0 * Math.PI;
+            double dist = Math.sqrt(random.nextDouble()) * radius;
+            int x = CENTER_X + (int) Math.round(Math.cos(angle) * dist);
+            int z = CENTER_Z + (int) Math.round(Math.sin(angle) * dist);
+            int y = minY + random.nextInt(maxY - minY);
+            if (isOpenAirPocket(level, x, y, z))
+            {
+                return new BlockPos(x, y, z);
+            }
+        }
+        return null;
+    }
+
     // A guaranteed land population, the same reasoning as PIXIE_POPULATION above - the only
     // Dream Elk placed so far were the handful WellspringOcean drops deep in the underground
     // ocean (see that class's own doc comment on why *those* specifically can't come from
     // natural spawning at all), which is a real but easy-to-never-actually-find population on
     // its own. This is the "you can actually just walk up and see one" guarantee, on the open
     // grass around the tree - same helping hand as the pixies got.
-    private static final int DREAM_ELK_LAND_POPULATION = 12;
+    private static final int DREAM_ELK_LAND_POPULATION = 10;
 
     private static void spawnDreamElks(ServerLevel level)
     {
@@ -530,6 +584,31 @@ public final class WorldTree
             elk.finalizeSpawn(level, level.getCurrentDifficultyAt(elk.blockPosition()), net.minecraft.world.entity.MobSpawnType.COMMAND, null, null);
             level.addFreshEntity(elk);
             placed++;
+        }
+    }
+
+    /**
+     * The tree's first people: as many fairies as {@code FairyPopulationMaintainer} keeps, placed
+     * among the branches the moment the tree stands - one of them steps up as queen right after
+     * (see {@code FairyCourt#ensureQueen}), and the maintainer fills her place.
+     */
+    private static final int FAIRY_POPULATION = 20;
+
+    private static void spawnFairies(ServerLevel level)
+    {
+        net.minecraft.util.RandomSource random = net.minecraft.util.RandomSource.create(20260907L * 13L);
+        for (int i = 0; i < FAIRY_POPULATION; i++)
+        {
+            BlockPos spot = randomOpenAirInTree(level, random, 30);
+            if (spot == null)
+            {
+                continue;
+            }
+            com.patrickma.magiccircles.entity.FairyEntity fairy =
+                    new com.patrickma.magiccircles.entity.FairyEntity(com.patrickma.magiccircles.registry.ModEntities.FAIRY.get(), level);
+            fairy.moveTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, random.nextFloat() * 360.0f, 0.0f);
+            fairy.finalizeSpawn(level, level.getCurrentDifficultyAt(spot), net.minecraft.world.entity.MobSpawnType.COMMAND, null, null);
+            level.addFreshEntity(fairy);
         }
     }
 

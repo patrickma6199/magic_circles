@@ -26,4 +26,9 @@ public class ModBlockEntities
     public static final RegistryObject<BlockEntityType<BookOfTheFayeBlockEntity>> BOOK_OF_THE_FAYE =
             BLOCK_ENTITIES.register("book_of_the_faye", () -> BlockEntityType.Builder.of(
                     BookOfTheFayeBlockEntity::new, ModBlocks.BOOK_OF_THE_FAYE_BLOCK.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<com.patrickma.magiccircles.block.entity.ArtOfBloodBlockEntity>> ART_OF_BLOOD =
+            BLOCK_ENTITIES.register("art_of_blood", () -> BlockEntityType.Builder.of(
+                    com.patrickma.magiccircles.block.entity.ArtOfBloodBlockEntity::new,
+                    ModBlocks.ART_OF_BLOOD_BLOCK.get()).build(null));
 }

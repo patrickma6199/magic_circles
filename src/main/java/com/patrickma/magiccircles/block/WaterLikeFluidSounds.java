@@ -2,9 +2,9 @@ package com.patrickma.magiccircles.block;
 
 import com.patrickma.magiccircles.MagicCircles;
 import com.patrickma.magiccircles.registry.ModFluidTypes;
+import com.patrickma.magiccircles.registry.ModSounds;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -18,6 +18,7 @@ import net.minecraftforge.registries.RegistryObject;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Splash and swim sounds for every water-like fluid this mod has ({@link ModFluidTypes#PORTAL_WATER},
@@ -30,6 +31,10 @@ import java.util.WeakHashMap;
  * out into its own class, checking every entry in {@link #WATER_LIKE_FLUID_TYPES}, once
  * {@link com.patrickma.magiccircles.registry.ModFluidTypes#WELLSPRING_WATER} needed the exact
  * same treatment rather than duplicating this whole class a second time.
+ *
+ * <p>Neither sounds like water, though: each has its own voice (see {@link ModSounds#voiceOf} and
+ * {@code tools/gen_sounds.py}) - the Wellspring bright and full of chimes, the portal fluid dark and
+ * swirling - for going in, climbing out, and every stroke in between.
  */
 @Mod.EventBusSubscriber(modid = MagicCircles.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class WaterLikeFluidSounds
@@ -55,21 +60,24 @@ public final class WaterLikeFluidSounds
     // to touch.  Weak so a despawned/unloaded entity's entry doesn't linger forever.
     private static final Map<LivingEntity, Long> LAST_TOUCHED_TICK = new WeakHashMap<>();
     private static final Map<LivingEntity, Long> LAST_SWIM_SOUND_TICK = new WeakHashMap<>();
+    /** Which fluid each entity was last seen in - what a "leaving" sound is played for. */
+    private static final Map<LivingEntity, FluidType> LAST_FLUID = new WeakHashMap<>();
 
     private WaterLikeFluidSounds()
     {
     }
 
-    private static boolean isInAnyWaterLikeFluid(LivingEntity entity)
+    @Nullable
+    private static FluidType waterLikeFluidIn(LivingEntity entity)
     {
         for (RegistryObject<FluidType> fluidType : WATER_LIKE_FLUID_TYPES)
         {
             if (entity.isInFluidType(fluidType.get()))
             {
-                return true;
+                return fluidType.get();
             }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -83,45 +91,70 @@ public final class WaterLikeFluidSounds
     public static void onLivingTick(LivingEvent.LivingTickEvent event)
     {
         LivingEntity entity = event.getEntity();
-        if (entity.level().isClientSide || !isInAnyWaterLikeFluid(entity))
+        if (entity.level().isClientSide)
         {
             return;
         }
-
         Level level = entity.level();
         long now = level.getGameTime();
+        FluidType fluid = waterLikeFluidIn(entity);
+        if (fluid == null)
+        {
+            // Was in one of these fluids last tick and isn't now: it just climbed out.
+            FluidType left = LAST_FLUID.remove(entity);
+            if (left != null && now - LAST_TOUCHED_TICK.getOrDefault(entity, Long.MIN_VALUE) <= 1)
+            {
+                playExit(level, entity, ModSounds.voiceOf(left));
+            }
+            return;
+        }
+
         long lastTouched = LAST_TOUCHED_TICK.getOrDefault(entity, Long.MIN_VALUE);
         // A gap of more than 1 tick since this entity was last seen touching one of these fluids
         // is what actually means "just entered" - not "still touching from a moment ago."
         boolean justEntered = now - lastTouched > 1;
         LAST_TOUCHED_TICK.put(entity, now);
+        LAST_FLUID.put(entity, fluid);
+        ModSounds.FluidVoice voice = ModSounds.voiceOf(fluid);
 
         if (justEntered)
         {
-            playSplash(level, entity);
+            playSplash(level, entity, voice);
         }
         else
         {
-            maybePlaySwim(level, entity, now);
+            maybePlaySwim(level, entity, now, voice);
         }
     }
 
-    private static void playSplash(Level level, LivingEntity entity)
+    private static void playExit(Level level, LivingEntity entity, @Nullable ModSounds.FluidVoice voice)
+    {
+        if (voice == null)
+        {
+            return;
+        }
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                voice.exit().get(), entity.getSoundSource(), 0.6F,
+                1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.2F);
+    }
+
+    private static void playSplash(Level level, LivingEntity entity, @Nullable ModSounds.FluidVoice voice)
     {
         // Same speed-based pick as vanilla's own Entity#doWaterSplashEffect: a gentle entry gets
         // the normal splash, a fast one (diving, falling in from height, ...) gets the louder
         // high-speed variant - though only Player actually distinguishes the two in vanilla
         // (Entity#getSwimHighSpeedSplashSound defaults to the same GENERIC_SPLASH as the normal
         // one for every other entity - there's no generic "high speed" splash sound at all).
+        // The fluid's own splash has no high-speed variant; a dive is just louder and a touch deeper.
         Vec3 motion = entity.getDeltaMovement();
         float speedFactor = Math.min(1.0F, (float) Math.sqrt(motion.x * motion.x * 0.2 + motion.y * motion.y + motion.z * motion.z * 0.2) * 0.9F);
-        boolean highSpeed = speedFactor >= 0.25F;
-        SoundEvent splashSound = entity instanceof Player
-                ? (highSpeed ? SoundEvents.PLAYER_SPLASH_HIGH_SPEED : SoundEvents.PLAYER_SPLASH)
-                : SoundEvents.GENERIC_SPLASH;
-        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                splashSound, entity.getSoundSource(), Math.max(0.35F, speedFactor),
-                1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.4F);
+        if (voice != null)
+        {
+            SoundEvent splashSound = voice.enter().get();
+            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                    splashSound, entity.getSoundSource(), Math.max(0.5F, speedFactor),
+                    (speedFactor >= 0.25F ? 0.9F : 1.0F) + (level.random.nextFloat() - level.random.nextFloat()) * 0.2F);
+        }
 
         double width = entity.getBbWidth();
         double floorY = Math.floor(entity.getY()) + 1.0;
@@ -134,11 +167,11 @@ public final class WaterLikeFluidSounds
         }
     }
 
-    private static void maybePlaySwim(Level level, LivingEntity entity, long now)
+    private static void maybePlaySwim(Level level, LivingEntity entity, long now, @Nullable ModSounds.FluidVoice voice)
     {
         Vec3 motion = entity.getDeltaMovement();
         double speed = motion.horizontalDistance();
-        if (speed < SWIM_SOUND_MIN_SPEED)
+        if (speed < SWIM_SOUND_MIN_SPEED || voice == null)
         {
             return;
         }
@@ -150,7 +183,7 @@ public final class WaterLikeFluidSounds
         LAST_SWIM_SOUND_TICK.put(entity, now);
         float volume = Math.min(1.0F, (float) speed * 3.0F);
         level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                SoundEvents.GENERIC_SWIM, entity.getSoundSource(), volume,
-                1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.4F);
+                voice.swim().get(), entity.getSoundSource(), volume,
+                1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.3F);
     }
 }
